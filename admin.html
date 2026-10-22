@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nohva Store - Acceso Administrador</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .scroll-smooth-x {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+      white-space: nowrap;
+    }
+    @keyframes bounce-slow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .animate-bounce-slow {
+      animation: bounce-slow 2s infinite ease-in-out;
+    }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; transition: .3s; border-radius: 20px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: #10b981; }
+    input:checked + .slider:before { transform: translateX(20px); }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen pb-12">
+
+  <!-- PANTALLA DE LOGIN -->
+  <div id="loginScreen" class="fixed inset-0 bg-gray-900 z-50 flex items-center justify-center p-4">
+    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 w-full max-w-sm shadow-xl space-y-4 text-center">
+      <img src="Logo - Nohva.png" alt="Nohva Logo" class="h-12 w-auto mx-auto invert mb-2">
+      <h2 class="text-base font-bold text-white">Panel de Administración</h2>
+      <p class="text-xs text-gray-400">Ingresa tus credenciales autorizadas</p>
+
+      <form onsubmit="handleLogin(event)" class="space-y-3 text-left text-xs pt-2">
+        <div>
+          <label class="block font-medium text-gray-300 mb-1">Usuario:</label>
+          <input type="text" id="loginUser" required placeholder="Ej: Moises" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block font-medium text-gray-300 mb-1">Contraseña:</label>
+          <input type="password" id="loginPass" required placeholder="••••••" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition shadow-md cursor-pointer mt-2">
+          Ingresar al Panel
+        </button>
+      </form>
+      <a href="index.html" class="block text-[11px] text-gray-400 hover:text-white pt-2">← Volver a la Tienda</a>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-40 px-4 py-3 flex items-center justify-between shadow-md">
+    <div class="flex items-center gap-2">
+      <img src="Logo - Nohva.png" alt="Nohva Logo" class="h-8 w-auto invert">
+      <div class="flex flex-col">
+        <span class="bg-indigo-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase w-max">Supabase Cloud</span>
+        <span id="loggedUserBadge" class="text-[10px] text-gray-400 mt-0.5"></span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" onclick="logoutAdmin()" class="bg-red-600/80 hover:bg-red-600 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition text-white cursor-pointer" title="Cerrar Sesión">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+      <a href="index.html" class="bg-gray-700 hover:bg-gray-600 text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-store text-indigo-400"></i>
+        <span>Ver Tienda</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto px-4 mt-5 space-y-5">
+
+    <!-- MENU PRINCIPAL DE OPCIONES -->
+    <div id="mainMenuView" class="space-y-3">
+      <p class="text-xs text-gray-400 font-medium uppercase tracking-wider mb-2">Selecciona una opción para gestionar:</p>
+
+      <button type="button" onclick="showSection('registerSaleSection')" class="w-full bg-gradient-to-r from-emerald-900/40 to-gray-800 hover:border-emerald-500 border border-emerald-600/50 rounded-2xl p-4 text-left transition shadow-sm flex items-center justify-between group cursor-pointer">
+        <div class="flex items-center gap-3.5 pointer-events-none">
+          <div class="w-11 h-11 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-cash-register"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Registrar Venta / Historial</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Escanea, cobra y revisa el registro de ventas</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-500 text-xs pointer-events-none"></i>
+      </button>
+
+      <button type="button" onclick="openAddProductModal()" class="w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-left transition shadow-sm flex items-center justify-between group cursor-pointer">
+        <div class="flex items-center gap-3.5 pointer-events-none">
+          <div class="w-11 h-11 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-cart-plus"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Añadir Artículo / Producto</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Hasta 10 fotos, precios, delivery y descripciones</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-500 text-xs pointer-events-none"></i>
+      </button>
+
+      <button type="button" onclick="showSection('manageProductsSection')" class="w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-left transition shadow-sm flex items-center justify-between group cursor-pointer">
+        <div class="flex items-center gap-3.5 pointer-events-none">
+          <div class="w-11 h-11 rounded-xl bg-amber-600/20 border border-amber-500/30 text-amber-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-list-check"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Administrar Artículos Creados</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Editar, cambiar precios y habilitar/deshabilitar</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-500 text-xs pointer-events-none"></i>
+      </button>
+
+      <button type="button" onclick="showSection('inventorySection')" class="w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-left transition shadow-sm flex items-center justify-between group cursor-pointer">
+        <div class="flex items-center gap-3.5 pointer-events-none">
+          <div class="w-11 h-11 rounded-xl bg-teal-600/20 border border-teal-500/30 text-teal-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Inventario y Stock</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Control de costos, cantidades ingresadas y disponibles</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-500 text-xs pointer-events-none"></i>
+      </button>
+
+      <button type="button" onclick="showSection('editBannerSection')" class="w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-left transition shadow-sm flex items-center justify-between group cursor-pointer">
+        <div class="flex items-center gap-3.5 pointer-events-none">
+          <div class="w-11 h-11 rounded-xl bg-pink-600/20 border border-pink-500/30 text-pink-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Editar Banner Promocional</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Modifica ofertas, degradados e íconos</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-500 text-xs pointer-events-none"></i>
+      </button>
+
+      <button type="button" onclick="showSection('editCategoriesSection')" class="w-full bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-indigo-500 rounded-2xl p-4 text-left transition shadow-sm flex items-center justify-between group cursor-pointer">
+        <div class="flex items-center gap-3.5 pointer-events-none">
+          <div class="w-11 h-11 rounded-xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-sm text-white">Modificar Categorías</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Crea, edita o elimina subsecciones del catálogo</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-gray-500 text-xs pointer-events-none"></i>
+      </button>
+    </div>
+
+    <!-- VISTA: REGISTRAR VENTA E HISTORIAL -->
+    <section id="registerSaleSection" class="hidden space-y-4">
+      <button type="button" onclick="showMainMenu()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 mb-2 cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Menú Principal</span>
+      </button>
+
+      <div class="grid grid-cols-2 gap-2 p-1 bg-gray-900 rounded-xl text-xs font-bold">
+        <button type="button" onclick="switchSaleTab('form')" id="tabBtnForm" class="py-2 rounded-lg bg-emerald-600 text-white transition text-center cursor-pointer">
+          Nueva Venta
+        </button>
+        <button type="button" onclick="switchSaleTab('history')" id="tabBtnHistory" class="py-2 rounded-lg text-gray-400 hover:text-white transition text-center cursor-pointer">
+          Historial y Reportes
+        </button>
+      </div>
+
+      <div id="saleFormContainer" class="bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-sm space-y-4">
+        <h2 class="text-sm font-bold text-emerald-400 border-b border-gray-700 pb-2 flex items-center gap-2">
+          <i class="fa-solid fa-cash-register"></i>
+          <span>Registrar Venta y Facturación</span>
+        </h2>
+
+        <form id="saleForm" onsubmit="handleSaleSubmit(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-medium text-gray-300 mb-1">Escanear o Ingresar Código de Barras:</label>
+            <div class="flex gap-2">
+              <input type="text" id="saleBarcode" placeholder="Ej: 759123456789..." onchange="searchProductByBarcode(this.value)" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-emerald-500">
+              <button type="button" onclick="triggerBarcodeScanner()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded-lg text-white font-bold cursor-pointer" title="Escanear con Cámara">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-300 mb-1">O seleccionar producto del inventario:</label>
+            <select id="saleInventorySelect" onchange="loadInventoryItemForSale(this.value)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              <option value="">-- Seleccionar producto --</option>
+            </select>
+          </div>
+
+          <div class="pt-2 border-t border-gray-700 space-y-3">
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Nombre del Producto:</label>
+              <input type="text" id="saleProdName" required readonly class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-300 cursor-not-allowed">
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Línea Comercial:</label>
+              <input type="text" id="saleProdLine" required readonly class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-300 cursor-not-allowed">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Precio Unitario ($ USD):</label>
+                <input type="number" id="salePrice" step="0.01" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Cantidad Vendida:</label>
+                <input type="number" id="saleQty" value="1" min="1" required class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Método de Pago:</label>
+              <select id="salePaymentMethod" onchange="toggleBsFields()" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                <option value="divisas">💵 Divisas en Efectivo ($)</option>
+                <option value="pago_movil">📱 Pago Móvil / Transferencia (Bs)</option>
+                <option value="zelle">⚡ Zelle</option>
+                <option value="binance">💎 Binance Pay</option>
+              </select>
+            </div>
+
+            <div id="bsPaymentFields" class="hidden space-y-2 bg-gray-900/60 p-2.5 rounded-xl border border-gray-700">
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Monto Pagado en Bolívares (Bs):</label>
+                <input type="number" id="saleAmountBs" step="0.01" placeholder="Ej: 360.50" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Número de Referencia Bancaria:</label>
+                <input type="text" id="saleRefNumber" placeholder="Últimos 4 o 6 dígitos..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-gray-700 space-y-2">
+              <p class="text-[11px] text-emerald-400 font-bold uppercase tracking-wider">Datos del Cliente (Opcional):</p>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-medium text-gray-300 mb-1">Nombre del cliente:</label>
+                  <input type="text" id="saleClientName" placeholder="Ej: Carlos Pérez" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                </div>
+                <div>
+                  <label class="block font-medium text-gray-300 mb-1">Teléfono:</label>
+                  <input type="text" id="saleClientPhone" placeholder="0414-1234567" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-1">
+              <label class="block font-medium text-gray-300 mb-1">Fecha y Hora de Venta:</label>
+              <input type="text" id="saleDateDisplay" readonly class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-400 text-[11px]">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer mt-2">
+            <i class="fa-solid fa-check"></i>
+            <span>Confirmar Venta y Descontar Stock</span>
+          </button>
+        </form>
+      </div>
+
+      <div id="saleHistoryContainer" class="hidden bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-sm space-y-4">
+        <div class="bg-gradient-to-r from-emerald-900/60 to-gray-900 p-3.5 rounded-xl border border-emerald-600/40 flex items-center justify-between">
+          <div>
+            <p class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Total de Ventas del Mes</p>
+            <h3 id="monthlyTotalDisplay" class="text-xl font-black text-white mt-0.5">$0.00</h3>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-lg font-bold">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+        </div>
+
+        <div class="space-y-1.5 text-xs">
+          <label class="block font-medium text-gray-300">Buscar registros por fecha específica:</label>
+          <div class="flex gap-2">
+            <input type="date" id="saleDateFilter" onchange="renderSalesHistory()" class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+            <button type="button" onclick="clearDateFilter()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-2 rounded-lg cursor-pointer" title="Ver todo">Mostrar Todo</button>
+          </div>
+        </div>
+
+        <h2 class="text-sm font-bold text-emerald-400 border-b border-gray-700 pb-2 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Historial Inalterable de Ventas</span>
+          </span>
+          <span id="salesCountBadge" class="text-[10px] bg-gray-700 px-2 py-0.5 rounded-full text-gray-300">0 ventas</span>
+        </h2>
+
+        <div id="salesHistoryList" class="space-y-2.5 pt-1"></div>
+      </div>
+    </section>
+
+    <!-- VISTA 1: AÑADIR / EDITAR PRODUCTO -->
+    <section id="addProductSection" class="hidden space-y-4">
+      <button type="button" onclick="goBackFromForm()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 mb-2 cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span id="backButtonText">Volver al Menú Principal</span>
+      </button>
+
+      <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-sm space-y-4">
+        <h2 id="formTitleHeader" class="text-sm font-bold text-indigo-400 border-b border-gray-700 pb-2 flex items-center gap-2">
+          <i class="fa-solid fa-box-archive"></i>
+          <span>Añadir Producto Nuevo</span>
+        </h2>
+
+        <form id="productForm" onsubmit="handleProductSubmit(event)" class="space-y-4 text-xs">
+          <input type="hidden" id="editProductId" value="">
+
+          <div class="space-y-2">
+            <label class="block font-medium text-gray-300">Imágenes del Producto (Máximo 10):</label>
+            <p class="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 border border-emerald-800 px-2.5 py-1 rounded-lg inline-block">
+              ⚡ Máximo 5 MB por imagen • JPG / PNG / WEBP recomendado
+            </p>
+
+            <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFileSelect(event)" class="hidden">
+
+            <div class="relative w-full min-h-[140px] bg-gray-700/50 border-2 border-dashed border-gray-600 hover:border-indigo-500 rounded-2xl p-3 transition flex items-center">
+              <div id="emptyUploadState" onclick="triggerFileInput()" class="w-full text-center py-4 cursor-pointer group">
+                <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 group-hover:scale-110 transition mb-2"></i>
+                <p class="text-xs font-bold text-gray-200">Toca para adjuntar fotos</p>
+              </div>
+              <div id="previewCarousel" class="hidden w-full flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1"></div>
+            </div>
+
+            <div class="pt-1">
+              <input type="text" id="manualUrlInput" placeholder="O pega enlace URL y presiona Enter..." onkeydown="handleUrlKeydown(event)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 text-[11px]">
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-2 border-t border-gray-700">
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Nombre del Producto:</label>
+              <input type="text" id="prodName" required placeholder="Ej: Audífonos Bluetooth F9-5" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Línea Comercial:</label>
+                <select id="prodLine" onchange="updateSubcatDropdown()" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                  <option value="tech">Tecnología</option>
+                  <option value="skincare">Cuidado Personal</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Categoría:</label>
+                <select id="prodCategory" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"></select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Precio ($ USD):</label>
+                <input type="number" id="prodPrice" step="0.01" required placeholder="8.00" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">¿Está en Oferta?</label>
+                <select id="prodDiscount" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                  <option value="false">No</option>
+                  <option value="true">Sí (Etiqueta OFERTA)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Condición de Entrega:</label>
+              <select id="prodDeliveryType" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+                <option value="delivery_gratis">🚚 Incluye Delivery Gratis</option>
+                <option value="sitio_centrico">📍 Entrega en sitio céntrico</option>
+                <option value="sin_delivery">📦 Sin delivery / Retiro en tienda</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Alerta de Stock (FOMO):</label>
+              <input type="text" id="prodStockAlert" placeholder="Ej: 🔥 ¡Quedan pocas unidades!" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Descripción corta:</label>
+              <textarea id="prodDescription" rows="2" required placeholder="Detalles atractivos..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Hashtags / Etiquetas:</label>
+              <input type="text" id="prodHashtags" placeholder="#audifonos #tigre" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Guardar Producto en Supabase</span>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- VISTA: ADMINISTRAR / LISTAR ARTÍCULOS -->
+    <section id="manageProductsSection" class="hidden space-y-4">
+      <button type="button" onclick="showMainMenu()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 mb-2 cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Menú Principal</span>
+      </button>
+
+      <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-sm space-y-4">
+        <h2 class="text-sm font-bold text-amber-400 border-b border-gray-700 pb-2 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-list-check"></i>
+            <span>Administrar Artículos</span>
+          </span>
+          <span id="totalItemsCount" class="text-[10px] bg-gray-700 px-2 py-0.5 rounded-full text-gray-300">0 ítems</span>
+        </h2>
+
+        <div class="grid grid-cols-2 gap-2 p-1 bg-gray-900 rounded-xl text-xs font-bold">
+          <button type="button" onclick="setAdminLine('tech')" id="adminBtnTech" class="py-2 rounded-lg transition text-center cursor-pointer">
+            Tecnología
+          </button>
+          <button type="button" onclick="setAdminLine('skincare')" id="adminBtnSkincare" class="py-2 rounded-lg transition text-center cursor-pointer">
+            Cuidado Personal
+          </button>
+        </div>
+
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+          <input type="text" id="adminSearchInput" placeholder="Buscar por nombre de producto..." oninput="renderAdminProductList()" class="w-full pl-8 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-xs text-white placeholder-gray-400 focus:outline-none focus:border-amber-500">
+        </div>
+
+        <div class="scroll-smooth-x no-scrollbar flex items-center gap-1.5 pb-1 text-xs" id="adminCategoryContainer"></div>
+
+        <div id="adminProductList" class="space-y-2.5 pt-1"></div>
+      </div>
+    </section>
+
+    <!-- VISTA: INVENTARIO Y STOCK -->
+    <section id="inventorySection" class="hidden space-y-4">
+      <button type="button" onclick="showMainMenu()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 mb-2 cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Menú Principal</span>
+      </button>
+
+      <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-sm space-y-4">
+        <h2 class="text-sm font-bold text-teal-400 border-b border-gray-700 pb-2 flex items-center justify-between">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span>Control de Inventario</span>
+          </span>
+          <button type="button" onclick="openInventoryForm()" class="bg-teal-600 hover:bg-teal-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg cursor-pointer">
+            + Nuevo Registro
+          </button>
+        </h2>
+
+        <button type="button" onclick="showSection('lowStockSection')" id="lowStockAlertBtn" class="hidden w-full bg-amber-500 hover:bg-amber-400 text-gray-900 border border-amber-600 p-2.5 rounded-xl text-xs font-bold flex items-center justify-between transition cursor-pointer shadow-md">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation animate-pulse"></i>
+            <span>⚠️ Ver productos que se están agotando</span>
+          </div>
+          <span id="lowStockBadge" class="bg-gray-900 text-amber-400 px-2 py-0.5 rounded-full text-[10px] font-extrabold">0</span>
+        </button>
+
+        <div class="grid grid-cols-2 gap-2 p-1 bg-gray-900 rounded-xl text-xs font-bold">
+          <button type="button" onclick="setInventoryLine('tech')" id="invBtnTech" class="py-2 rounded-lg transition text-center cursor-pointer">
+            Tecnología
+          </button>
+          <button type="button" onclick="setInventoryLine('skincare')" id="invBtnSkincare" class="py-2 rounded-lg transition text-center cursor-pointer">
+            Cuidado Personal
+          </button>
+        </div>
+
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+          <input type="text" id="invSearchInput" placeholder="Buscar por nombre en inventario..." oninput="renderInventoryList()" class="w-full pl-8 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-xs text-white placeholder-gray-400 focus:outline-none focus:border-teal-500">
+        </div>
+
+        <div class="scroll-smooth-x no-scrollbar flex items-center gap-1.5 pb-1 text-xs" id="invCategoryContainer"></div>
+
+        <!-- Formulario Oculto de Inventario -->
+        <div id="inventoryFormContainer" class="hidden bg-gray-900 p-3 rounded-xl border border-gray-700 space-y-3">
+          <h3 id="invFormTitle" class="text-xs font-bold text-white">Registrar Stock de Producto</h3>
+          <form id="inventoryForm" onsubmit="handleInventorySubmit(event)" class="space-y-3 text-xs">
+            <input type="hidden" id="editInvId" value="">
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Nombre del Producto:</label>
+              <input type="text" id="invName" required placeholder="Ej: Audífonos F9-5" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="block font-medium text-gray-300 mb-1">Código de Barras (Opcional):</label>
+              <input type="text" id="invBarcode" placeholder="Ej: 759123456789" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Línea Comercial:</label>
+                <select id="invLine" onchange="updateInvSubcatDropdown()" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+                  <option value="tech">Tecnología</option>
+                  <option value="skincare">Cuidado Personal</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Categoría:</label>
+                <select id="invCategory" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"></select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Cantidad Ingresada:</label>
+                <input type="number" id="invIngresada" required placeholder="20" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Cantidad Disponible:</label>
+                <input type="number" id="invDisponible" required placeholder="15" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Costo Unitario ($):</label>
+                <input type="number" id="invCosto" step="0.01" required placeholder="4.50" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+              <div>
+                <label class="block font-medium text-gray-300 mb-1">Precio Venta ($):</label>
+                <input type="number" id="invVenta" step="0.01" required placeholder="8.00" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              </div>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg cursor-pointer">Guardar</button>
+              <button type="button" onclick="closeInventoryForm()" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg cursor-pointer">Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="inventoryList" class="space-y-2.5"></div>
+      </div>
+    </section>
+
+    <!-- VISTA: PRODUCTOS AGOTÁNDOSE -->
+    <section id="lowStockSection" class="hidden space-y-4">
+      <button type="button" onclick="showSection('inventorySection')" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 mb-2 cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver a Inventario</span>
+      </button>
+
+      <div class="bg-gray-800 rounded-2xl p-4 border border-amber-500/60 shadow-sm space-y-3">
+        <h2 class="text-sm font-bold text-amber-400 border-b border-gray-700 pb-2 flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Productos que se están agotando (≤ 3 unidades)</span>
+        </h2>
+        <div id="lowStockList" class="space-y-2.5 pt-1"></div>
+      </div>
+    </section>
+
+    <!-- VISTA: EDITAR BANNER PROMOCIONAL -->
+    <section id="editBannerSection" class="hidden space-y-4">
+      <button type="button" onclick="showMainMenu()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 mb-2 cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Menú Principal</span>
+      </button>
+
+      <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-sm space-y-4">
+        <div class="bg-gray-900/80 p-3.5 rounded-xl border border-gray-700 flex items-center justify-between">
+          <div class="space-y-0.5">
+            <h3 class="text-xs font-bold text-white flex items-center gap-1.5">
+              <i class="fa-solid fa-eye text-pink-400"></i>
+              <span>Mostrar Banner en la Tienda</span>
+            </h3>
+            <p class="text-[10px] text-gray-400">Enciende o apaga el banner promocional</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="bannerActiveSwitch" onchange="updateBannerPreview()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="space-y-1">
+          <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Vista previa en directo:</span>
+          <div id="bannerPreview" class="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-2xl shadow-md text-white flex items-center justify-between transition-all duration-300 cursor-pointer">
+            <div class="space-y-1">
+              <span id="previewBadge" class="bg-amber-400 text-gray-900 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase inline-block shadow-sm">
+                OFERTA DE LA SEMANA
+              </span>
+              <h3 id="previewTitle" class="text-sm font-extrabold leading-tight">
+                Lévate tus Combos con Delivery Gratis
+              </h3>
+            </div>
+            <div class="flex-shrink-0 ml-3 animate-bounce-slow">
+              <i id="previewIcon" class="fa-solid fa-fire text-amber-400 text-2xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4 text-xs pt-2">
+          <div class="bg-gray-900/50 p-3 rounded-xl border border-gray-700 space-y-1.5">
+            <label class="block font-medium text-pink-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-link"></i>
+              <span>Enlazar a un Producto al hacer clic:</span>
+            </label>
+            <p class="text-[10px] text-gray-400">Al presionar el banner en la tienda, abrirá directamente este producto:</p>
+            <select id="bannerProductLinkSelect" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white">
+              <option value="">-- Ninguno (Sin enlace directo) --</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-300 mb-1">Texto de la Alerta / Etiqueta:</label>
+            <input type="text" id="bannerBadgeInput" value="OFERTA DE LA SEMANA" oninput="updateBannerPreview()" placeholder="Ej: OFERTA DE LA SEMANA" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-500">
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-300 mb-1">Título de la Promoción:</label>
+            <input type="text" id="bannerTitleInput" value="Lévate tus Combos con Delivery Gratis" oninput="updateBannerPreview()" placeholder="Escribe el mensaje atractivo..." class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-pink-500">
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-300 mb-2">Color de Fondo de la Alerta (Box):</label>
+            <div class="flex items-center gap-2.5 py-1" id="badgeColorSelectorContainer">
+              <button type="button" onclick="selectBadgeColor('bg-amber-400 text-gray-900')" class="w-8 h-8 rounded-full bg-amber-400 border-2 border-white flex-shrink-0 cursor-pointer shadow" title="Amarillo Clásico"></button>
+              <button type="button" onclick="selectBadgeColor('bg-white text-gray-900')" class="w-8 h-8 rounded-full bg-white border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Blanco Limpio"></button>
+              <button type="button" onclick="selectBadgeColor('bg-pink-600 text-white')" class="w-8 h-8 rounded-full bg-pink-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Rosa Vibrante"></button>
+              <button type="button" onclick="selectBadgeColor('bg-emerald-500 text-gray-900')" class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Verde Esmeralda"></button>
+              <button type="button" onclick="selectBadgeColor('bg-red-600 text-white')" class="w-8 h-8 rounded-full bg-red-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Rojo Oferta"></button>
+              <button type="button" onclick="selectBadgeColor('bg-cyan-500 text-gray-900')" class="w-8 h-8 rounded-full bg-cyan-500 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Cyan Tech"></button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-medium text-gray-300 mb-2">Color del Gradiente del Banner:</label>
+            <div class="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1" id="gradientSelectorContainer">
+              <button type="button" onclick="selectGradient('from-indigo-600 to-purple-600')" class="w-9 h-9 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 border-2 border-white flex-shrink-0 cursor-pointer shadow" title="Indigo / Purple"></button>
+              <button type="button" onclick="selectGradient('from-pink-600 to-rose-600')" class="w-9 h-9 rounded-full bg-gradient-to-r from-pink-600 to-rose-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Pink / Rose"></button>
+              <button type="button" onclick="selectGradient('from-amber-500 to-orange-600')" class="w-9 h-9 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Amber / Orange"></button>
+              <button type="button" onclick="selectGradient('from-emerald-600 to-teal-600')" class="w-9 h-9 rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Emerald / Teal"></button>
+              <button type="button" onclick="selectGradient('from-cyan-600 to-blue-600')" class="w-9 h-9 rounded-full bg-gradient-to-r from-cyan-600 to-blue-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Cyan / Blue"></button>
+              <button type="button" onclick="selectGradient('from-red-600 to-orange-600')" class="w-9 h-9 rounded-full bg-gradient-to-r from-red-600 to-orange-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Red / Orange"></button>
+              <button type="button" onclick="selectGradient('from-violet-600 to-fuchsia-600')" class="w-9 h-9 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Violet / Fuchsia"></button>
+              <button type="button" onclick="selectGradient('from-slate-800 to-gray-900')" class="w-9 h-9 rounded-full bg-gradient-to-r from-slate-800 to-gray-900 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Dark Slate"></button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block font-medium text-gray-300">Ícono del Banner (Con efecto rebote):</label>
+            <div class="grid grid-cols-4 gap-2" id="iconSelectorContainer">
+              <button type="button" onclick="selectBannerIcon('fa-fire')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-pink-500 text-white flex flex-col items-center gap-1 cursor-pointer" title="Fuego">
+                <i class="fa-solid fa-fire text-lg"></i>
+                <span class="text-[9px]">Fuego</span>
+              </button>
+              <button type="button" onclick="selectBannerIcon('fa-tag')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-300 flex flex-col items-center gap-1 cursor-pointer" title="Etiqueta">
+                <i class="fa-solid fa-tag text-lg"></i>
+                <span class="text-[9px]">Etiqueta</span>
+              </button>
+              <button type="button" onclick="selectBannerIcon('fa-gift')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-300 flex flex-col items-center gap-1 cursor-pointer" title="Regalo">
+                <i class="fa-solid fa-gift text-lg"></i>
+                <span class="text-[9px]">Regalo</span>
+              </button>
+              <button type="button" onclick="selectBannerIcon('fa-bolt')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-300 flex flex-col items-center gap-1 cursor-pointer" title="Rayo">
+                <i class="fa-solid fa-bolt text-lg"></i>
+                <span class="text-[9px]">Rayo</span>
+              </button>
+              <button type="button" onclick="selectBannerIcon('fa-truck-fast')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-300 flex flex-col items-center gap-1 cursor-pointer" title="Delivery">
+                <i class="fa-solid fa-truck-fast text-lg"></i>
+                <span class="text-[9px]">Delivery</span>
+              </button>
+              <button type="button" onclick="selectBannerIcon('fa-star')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-300 flex flex-col items-center gap-1 cursor-pointer" title="Estrella">
+                <i class="fa-solid fa-star text-lg"></i>
+                <span class="text-[9px]">Estrella</span>
+              </button>
+              <button type="button" onclick="selectBannerIcon('fa-percent')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-300 flex flex-col items-center gap-1 cursor-pointer" title="Descuento">
+                <i class="fa-solid fa-percent text-lg"></i>
+                <span class="text-[9px]">Descuento</span>
+              </button>
+              <button type="button" onclick="selectBannerIcon('fa-crown')" class="p-2.5 rounded-xl bg-gray-700 hover:bg-gray-600 border border-gray-600 text-gray-300 flex flex-col items-center gap-1 cursor-pointer" title="Corona">
+                <i class="fa-solid fa-crown text-lg"></i>
+                <span class="text-[9px]">Corona</span>
+              </button>
+            </div>
+
+            <button type="button" onclick="toggleIconColorPanel()" class="w-full bg-gray-700 hover:bg-gray-650 border border-gray-600 text-pink-400 font-bold py-2 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer mt-2">
+              <i class="fa-solid fa-palette"></i>
+              <span>Cambiar color de íconos</span>
+            </button>
+
+            <div id="iconColorPanel" class="hidden bg-gray-900 p-3 rounded-xl border border-gray-700 space-y-2 mt-2">
+              <p class="text-[11px] text-gray-300 font-medium">Elige el color para el ícono:</p>
+              <div class="flex items-center gap-2.5 py-1" id="iconColorSelectorContainer">
+                <button type="button" onclick="selectIconColor('text-amber-400')" class="w-8 h-8 rounded-full bg-amber-400 border-2 border-white flex-shrink-0 cursor-pointer shadow" title="Amarillo"></button>
+                <button type="button" onclick="selectIconColor('text-white')" class="w-8 h-8 rounded-full bg-white border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Blanco"></button>
+                <button type="button" onclick="selectIconColor('text-pink-400')" class="w-8 h-8 rounded-full bg-pink-400 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Rosa"></button>
+                <button type="button" onclick="selectIconColor('text-emerald-400')" class="w-8 h-8 rounded-full bg-emerald-400 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Verde"></button>
+                <button type="button" onclick="selectIconColor('text-cyan-400')" class="w-8 h-8 rounded-full bg-cyan-400 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Cyan"></button>
+                <button type="button" onclick="selectIconColor('text-orange-500')" class="w-8 h-8 rounded-full bg-orange-500 border-2 border-transparent hover:border-white flex-shrink-0 cursor-pointer shadow" title="Naranja"></button>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" onclick="saveBannerConfig()" class="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer mt-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Guardar Configuración del Banner</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VISTA: MODIFICAR CATEGORÍAS -->
+    <section id="editCategoriesSection" class="hidden space-y-4">
+      <button type="button" onclick="showMainMenu()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1.5 mb-2 cursor-pointer">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver al Menú Principal</span>
+      </button>
+
+      <div class="bg-gray-800 rounded-2xl p-4 border border-gray-700 shadow-sm space-y-4">
+        <h2 class="text-sm font-bold text-emerald-400 border-b border-gray-700 pb-2 flex items-center gap-2">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Gestión de Categorías del Catálogo</span>
+        </h2>
+
+        <div class="grid grid-cols-2 gap-2 p-1 bg-gray-900 rounded-xl text-xs font-bold">
+          <button type="button" onclick="setCategoryManageLine('tech')" id="catLineBtnTech" class="py-2 rounded-lg transition text-center cursor-pointer">
+            Tecnología
+          </button>
+          <button type="button" onclick="setCategoryManageLine('skincare')" id="catLineBtnSkincare" class="py-2 rounded-lg transition text-center cursor-pointer">
+            Cuidado Personal
+          </button>
+        </div>
+
+        <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-700 space-y-2 text-xs relative">
+          <label class="block font-medium text-emerald-400">+ Añadir Nueva Categoría:</label>
+          <div class="flex gap-2">
+            <button type="button" onclick="toggleEmojiPicker('new')" id="emojiPickerBtn" class="w-14 bg-gray-700 border border-gray-600 hover:border-emerald-500 rounded-lg py-2 text-lg text-center cursor-pointer flex items-center justify-center transition shadow-sm" title="Elegir Ícono / Emoji">
+              ✨
+            </button>
+            <input type="hidden" id="newCatEmoji" value="✨">
+
+            <input type="text" id="newCatName" placeholder="Nombre..." class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500">
+            <button type="button" onclick="addCategory()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-2 rounded-lg font-bold text-white transition cursor-pointer">
+              Añadir
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Categorías Activas:</p>
+          <div id="categoriesManageList" class="space-y-2"></div>
+        </div>
+
+        <!-- PANEL DE EMOJIS -->
+        <div id="emojiPickerContainer" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div class="bg-gray-800 border border-gray-600 rounded-2xl p-4 w-full max-w-sm shadow-2xl space-y-3 text-xs">
+            <div class="flex items-center justify-between border-b border-gray-700 pb-2">
+              <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                <i class="fa-solid fa-face-smile"></i>
+                <span>Selecciona un Ícono / Emoji</span>
+              </span>
+              <button type="button" onclick="closeEmojiPicker()" class="text-gray-400 hover:text-white font-bold text-sm px-2">✕</button>
+            </div>
+            <div class="max-h-72 overflow-y-auto no-scrollbar space-y-3 pr-1">
+              <div class="bg-gray-900/50 p-2.5 rounded-xl border border-gray-700/60 space-y-1.5">
+                <span class="text-[10px] text-cyan-400 font-extrabold uppercase tracking-wider block border-b border-cyan-900/40 pb-0.5">⚡ Emojis Populares</span>
+                <div class="grid grid-cols-7 gap-1 text-center text-xl pt-1">
+                  <button type="button" onclick="selectEmoji('⚡')" class="hover:bg-gray-700 p-1.5 rounded transition">⚡</button>
+                  <button type="button" onclick="selectEmoji('🎧')" class="hover:bg-gray-700 p-1.5 rounded transition">🎧</button>
+                  <button type="button" onclick="selectEmoji('⌚')" class="hover:bg-gray-700 p-1.5 rounded transition">⌚</button>
+                  <button type="button" onclick="selectEmoji('🎮')" class="hover:bg-gray-700 p-1.5 rounded transition">🎮</button>
+                  <button type="button" onclick="selectEmoji('🚗')" class="hover:bg-gray-700 p-1.5 rounded transition">🚗</button>
+                  <button type="button" onclick="selectEmoji('🧴')" class="hover:bg-gray-700 p-1.5 rounded transition">🧴</button>
+                  <button type="button" onclick="selectEmoji('✨')" class="hover:bg-gray-700 p-1.5 rounded transition">✨</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Configuración oficial de Supabase con cabecera global para Netlify
+    const SUPABASE_URL = 'https://hnqjmbgztkgfzienptiy.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW50aXkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc5MjY4NTI1MiwiZXhwIjoyMTA4MjYxMjUyfQ.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+      global: {
+        headers: { 'x-client-info': 'nohva-store-admin' },
+      },
+    });
+
+    let uploadedImages = [];
+    let currentAdminLine = 'tech';
+    let currentAdminCategory = 'all';
+    let currentInvLine = 'tech';
+    let currentInvCategory = 'all';
+    let currentManageCatLine = 'tech';
+    let previousView = 'main';
+
+    let productsCache = [];
+    let inventoryCache = [];
+    let salesCache = [];
+    let categoriesCache = {};
+    let bannerConfigCache = null;
+
+    let editingCategoryIndex = null;
+    let targetEmojiTarget = 'new';
+
+    let selectedGradientClass = 'from-indigo-600 to-purple-600';
+    let selectedBadgeColorClass = 'bg-amber-400 text-gray-900';
+    let selectedIconClass = 'fa-fire';
+    let selectedIconColorClass = 'text-amber-400';
+
+    const defaultCategoriesByLine = {
+      tech: [
+        { id: 'audifonos', icon: '🎧', name: 'Audífonos' },
+        { id: 'cargadores', icon: '⚡', name: 'Cargadores' },
+        { id: 'relojes', icon: '⌚', name: 'Relojes' },
+        { id: 'gaming', icon: '🎮', name: 'Gaming' },
+        { id: 'auto', icon: '🚗', name: 'Auto' }
+      ],
+      skincare: [
+        { id: 'unidades', icon: '🧴', name: 'Unidades' },
+        { id: 'kits', icon: '✨', name: 'Kits' }
+      ]
+    };
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      applyLoginState();
+      await loadAllDataFromSupabase();
+      updateSubcatDropdown();
+      updateInvSubcatDropdown();
+      loadSavedBannerConfig();
+      populateBannerProductSelect();
+    });
+
+    async function loadAllDataFromSupabase() {
+      try {
+        const { data: pData } = await supabaseClient.from('products').select('*');
+        if (pData) productsCache = pData;
+
+        const { data: iData } = await supabaseClient.from('inventory').select('*');
+        if (iData) inventoryCache = iData;
+
+        const { data: sData } = await supabaseClient.from('sales_history').select('*');
+        if (sData) salesCache = sData;
+
+        const { data: cData } = await supabaseClient.from('categories').select('*');
+        if (cData && cData.length > 0) {
+          categoriesCache = {};
+          cData.forEach(row => { categoriesCache[row.line] = row.data; });
+        } else {
+          categoriesCache = defaultCategoriesByLine;
+        }
+
+        const { data: bData } = await supabaseClient.from('banner_config').select('*').eq('id', 1).single();
+        if (bData) bannerConfigCache = bData.config;
+      } catch (err) {
+        console.error("Error cargando datos de Supabase:", err);
+      }
+    }
+
+    function getStoredCategories() {
+      return categoriesCache || defaultCategoriesByLine;
+    }
+
+    async function saveCategoriesToSupabase(newCats) {
+      categoriesCache = newCats;
+      for (const line of ['tech', 'skincare']) {
+        await supabaseClient.from('categories').upsert({ line: line, data: newCats[line] });
+      }
+    }
+
+    function toggleEmojiPicker(target = 'new') {
+      targetEmojiTarget = target;
+      document.getElementById('emojiPickerContainer').classList.remove('hidden');
+    }
+
+    function closeEmojiPicker() {
+      document.getElementById('emojiPickerContainer').classList.add('hidden');
+    }
+
+    function selectEmoji(emoji) {
+      if (targetEmojiTarget === 'new') {
+        document.getElementById('newCatEmoji').value = emoji;
+        document.getElementById('emojiPickerBtn').innerText = emoji;
+      } else if (typeof targetEmojiTarget === 'number') {
+        const btn = document.getElementById(`editEmojiBtn_${targetEmojiTarget}`);
+        const hiddenInput = document.getElementById(`editEmojiInput_${targetEmojiTarget}`);
+        if (btn) btn.innerText = emoji;
+        if (hiddenInput) hiddenInput.value = emoji;
+      }
+      closeEmojiPicker();
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      const validUsers = { "Moises": "250926", "Shannon": "amoaminovio" };
+
+      if (validUsers[user] && validUsers[user] === pass) {
+        localStorage.setItem('nohva_admin_logged', 'true');
+        localStorage.setItem('nohva_current_user', user);
+        applyLoginState();
+      } else {
+        alert('Usuario o contraseña incorrectos.');
+      }
+    }
+
+    function applyLoginState() {
+      const isLogged = localStorage.getItem('nohva_admin_logged');
+      const currentUser = localStorage.getItem('nohva_current_user') || 'Admin';
+      if (isLogged === 'true') {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('loggedUserBadge').innerText = `👤 ${currentUser}`;
+      } else {
+        document.getElementById('loginScreen').classList.remove('hidden');
+      }
+    }
+
+    function logoutAdmin() {
+      localStorage.removeItem('nohva_admin_logged');
+      localStorage.removeItem('nohva_current_user');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+
+    function showSection(sectionId) {
+      document.getElementById('mainMenuView').classList.add('hidden');
+      document.getElementById('addProductSection').classList.add('hidden');
+      document.getElementById('manageProductsSection').classList.add('hidden');
+      document.getElementById('inventorySection').classList.add('hidden');
+      document.getElementById('lowStockSection').classList.add('hidden');
+      document.getElementById('registerSaleSection').classList.add('hidden');
+      document.getElementById('editBannerSection').classList.add('hidden');
+      document.getElementById('editCategoriesSection').classList.add('hidden');
+
+      const target = document.getElementById(sectionId);
+      if (target) target.classList.remove('hidden');
+
+      if (sectionId === 'manageProductsSection') {
+        previousView = 'manage';
+        setAdminLine('tech');
+      } else if (sectionId === 'inventorySection') {
+        setInventoryLine('tech');
+      } else if (sectionId === 'lowStockSection') {
+        renderLowStockList();
+      } else if (sectionId === 'registerSaleSection') {
+        prepareSaleSection();
+      } else if (sectionId === 'editBannerSection') {
+        populateBannerProductSelect();
+        loadSavedBannerConfig();
+      } else if (sectionId === 'editCategoriesSection') {
+        setCategoryManageLine('tech');
+      }
+    }
+
+    function showMainMenu() {
+      previousView = 'main';
+      document.getElementById('addProductSection').classList.add('hidden');
+      document.getElementById('manageProductsSection').classList.add('hidden');
+      document.getElementById('inventorySection').classList.add('hidden');
+      document.getElementById('lowStockSection').classList.add('hidden');
+      document.getElementById('registerSaleSection').classList.add('hidden');
+      document.getElementById('editBannerSection').classList.add('hidden');
+      document.getElementById('editCategoriesSection').classList.add('hidden');
+      document.getElementById('mainMenuView').classList.remove('hidden');
+    }
+
+    function goBackFromForm() {
+      if (previousView === 'manage') {
+        showSection('manageProductsSection');
+      } else if (previousView === 'inventory') {
+        showSection('inventorySection');
+      } else {
+        showMainMenu();
+      }
+    }
+
+    function setCategoryManageLine(line) {
+      currentManageCatLine = line;
+      editingCategoryIndex = null;
+      const btnTech = document.getElementById('catLineBtnTech');
+      const btnSkincare = document.getElementById('catLineBtnSkincare');
+
+      if (line === 'tech') {
+        btnTech.className = 'py-2 rounded-lg bg-emerald-600 text-white font-bold transition cursor-pointer';
+        btnSkincare.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition cursor-pointer';
+        selectEmoji('🎧');
+      } else {
+        btnSkincare.className = 'py-2 rounded-lg bg-emerald-600 text-white font-bold transition cursor-pointer';
+        btnTech.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition cursor-pointer';
+        selectEmoji('🧴');
+      }
+      renderManageCategoryList();
+    }
+
+    function renderManageCategoryList() {
+      const container = document.getElementById('categoriesManageList');
+      const allCats = getStoredCategories();
+      const list = allCats[currentManageCatLine] || [];
+
+      if (list.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-gray-500 py-4">No hay categorías registradas.</p>`;
+        return;
+      }
+
+      container.innerHTML = list.map((cat, idx) => {
+        const isEditing = editingCategoryIndex === idx;
+
+        if (isEditing) {
+          return `
+            <div class="bg-gray-800 p-2.5 rounded-xl border-2 border-emerald-500 flex items-center justify-between gap-2 text-xs shadow-lg">
+              <div class="flex items-center gap-2 flex-1 min-w-0">
+                <button type="button" onclick="toggleEmojiPicker(${idx})" id="editEmojiBtn_${idx}" class="w-10 h-9 bg-gray-700 border border-gray-600 hover:border-emerald-400 rounded-lg text-lg text-center cursor-pointer flex items-center justify-center transition flex-shrink-0" title="Cambiar Emoji">
+                  ${cat.icon || '📦'}
+                </button>
+                <input type="hidden" id="editEmojiInput_${idx}" value="${cat.icon || '📦'}">
+                <input type="text" id="editNameInput_${idx}" value="${cat.name}" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-2.5 py-1.5 text-white font-bold focus:outline-none focus:border-emerald-500 text-xs">
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button type="button" onclick="saveCategoryInLine(${idx})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1.5 rounded-lg transition text-[11px] font-bold cursor-pointer" title="Guardar"><i class="fa-solid fa-check"></i></button>
+                <button type="button" onclick="cancelCategoryInLine()" class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-2.5 py-1.5 rounded-lg transition text-[11px] font-bold cursor-pointer" title="Cancelar"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="bg-gray-700/60 p-2.5 rounded-xl border border-gray-600 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-base">${cat.icon || '📦'}</span>
+              <span class="font-bold text-white">${cat.name}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="enableCategoryInLine(${idx})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-lg transition text-[11px] font-bold cursor-pointer" title="Editar"><i class="fa-solid fa-pen"></i></button>
+              <button type="button" onclick="deleteCategoryItem('${currentManageCatLine}', ${idx})" class="bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg transition text-[11px] font-bold cursor-pointer" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function enableCategoryInLine(index) {
+      editingCategoryIndex = index;
+      renderManageCategoryList();
+    }
+
+    function cancelCategoryInLine() {
+      editingCategoryIndex = null;
+      renderManageCategoryList();
+    }
+
+    async function saveCategoryInLine(index) {
+      const newName = document.getElementById(`editNameInput_${index}`).value.trim();
+      const newIcon = document.getElementById(`editEmojiInput_${index}`).value.trim() || '📦';
+      if (!newName) return alert('El nombre no puede estar vacío.');
+
+      let allCats = getStoredCategories();
+      allCats[currentManageCatLine][index].name = newName;
+      allCats[currentManageCatLine][index].icon = newIcon;
+
+      await saveCategoriesToSupabase(allCats);
+      editingCategoryIndex = null;
+      renderManageCategoryList();
+      updateSubcatDropdown();
+      updateInvSubcatDropdown();
+    }
+
+    async function addCategory() {
+      const name = document.getElementById('newCatName').value.trim();
+      const icon = document.getElementById('newCatEmoji').value.trim() || '📦';
+      if (!name) return alert('Escribe el nombre de la categoría.');
+
+      let allCats = getStoredCategories();
+      const newId = name.toLowerCase().replace(/\s+/g, '_');
+      allCats[currentManageCatLine].push({ id: newId, icon, name });
+
+      await saveCategoriesToSupabase(allCats);
+      document.getElementById('newCatName').value = '';
+      renderManageCategoryList();
+      updateSubcatDropdown();
+      updateInvSubcatDropdown();
+      alert('¡Categoría añadida a Supabase!');
+    }
+
+    async function deleteCategoryItem(line, index) {
+      if (confirm('¿Estás seguro de eliminar esta categoría?')) {
+        let allCats = getStoredCategories();
+        allCats[line].splice(index, 1);
+        await saveCategoriesToSupabase(allCats);
+        renderManageCategoryList();
+        updateSubcatDropdown();
+        updateInvSubcatDropdown();
+      }
+    }
+
+    function updateSubcatDropdown() {
+      const line = document.getElementById('prodLine').value;
+      const select = document.getElementById('prodCategory');
+      const allCats = getStoredCategories();
+      const options = allCats[line] || [];
+      select.innerHTML = options.map(o => `<option value="${o.id}">${o.icon || '📦'} ${o.name}</option>`).join('');
+    }
+
+    function updateInvSubcatDropdown() {
+      const line = document.getElementById('invLine').value;
+      const select = document.getElementById('invCategory');
+      const allCats = getStoredCategories();
+      const options = allCats[line] || [];
+      select.innerHTML = options.map(o => `<option value="${o.id}">${o.icon || '📦'} ${o.name}</option>`).join('');
+    }
+
+    function openAddProductModal() {
+      previousView = 'main';
+      document.getElementById('backButtonText').innerText = 'Volver al Menú Principal';
+      document.getElementById('editProductId').value = '';
+      document.getElementById('formTitleHeader').innerHTML = `<i class="fa-solid fa-box-archive"></i><span>Añadir Producto Nuevo</span>`;
+      document.getElementById('productForm').reset();
+      uploadedImages = [];
+      renderPreviewCarousel();
+      updateSubcatDropdown();
+      showSection('addProductSection');
+    }
+
+    function populateBannerProductSelect() {
+      const select = document.getElementById('bannerProductLinkSelect');
+      select.innerHTML = '<option value="">-- Ninguno (Sin enlace directo) --</option>' + productsCache.map(p => `
+        <option value="${p.id}">${p.name} ($${p.price})</option>
+      `).join('');
+    }
+
+    function loadSavedBannerConfig() {
+      const config = bannerConfigCache || {
+        active: true,
+        badge: 'OFERTA DE LA SEMANA',
+        title: 'Lévate tus Combos con Delivery Gratis',
+        gradient: 'from-indigo-600 to-purple-600',
+        badgeColor: 'bg-amber-400 text-gray-900',
+        icon: 'fa-fire',
+        iconColor: 'text-amber-400',
+        productId: ''
+      };
+
+      document.getElementById('bannerActiveSwitch').checked = config.active !== false;
+      document.getElementById('bannerBadgeInput').value = config.badge;
+      document.getElementById('bannerTitleInput').value = config.title;
+      document.getElementById('bannerProductLinkSelect').value = config.productId || '';
+
+      selectedGradientClass = config.gradient || 'from-indigo-600 to-purple-600';
+      selectedBadgeColorClass = config.badgeColor || 'bg-amber-400 text-gray-900';
+      selectedIconClass = config.icon || 'fa-fire';
+      selectedIconColorClass = config.iconColor || 'text-amber-400';
+
+      highlightSelectedGradient();
+      highlightSelectedBadgeColor();
+      highlightSelectedIcon();
+      highlightSelectedIconColor();
+      updateBannerPreview();
+    }
+
+    function updateBannerPreview() {
+      const isActive = document.getElementById('bannerActiveSwitch').checked;
+      const previewBox = document.getElementById('bannerPreview');
+
+      if (!isActive) previewBox.classList.add('opacity-40', 'grayscale');
+      else previewBox.classList.remove('opacity-40', 'grayscale');
+
+      const badgeText = document.getElementById('bannerBadgeInput').value || 'OFERTA';
+      const titleText = document.getElementById('bannerTitleInput').value || 'Título';
+
+      const previewBadge = document.getElementById('previewBadge');
+      previewBadge.innerText = badgeText;
+      previewBadge.className = `${selectedBadgeColorClass} font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase inline-block shadow-sm`;
+
+      document.getElementById('previewTitle').innerText = titleText;
+      previewBox.className = `bg-gradient-to-r ${selectedGradientClass} p-4 rounded-2xl shadow-md text-white flex items-center justify-between transition-all duration-300 ${!isActive ? 'opacity-40 grayscale' : ''}`;
+
+      const previewIcon = document.getElementById('previewIcon');
+      previewIcon.className = `fa-solid ${selectedIconClass} ${selectedIconColorClass} text-2xl`;
+    }
+
+    function toggleIconColorPanel() {
+      document.getElementById('iconColorPanel').classList.toggle('hidden');
+    }
+
+    function selectGradient(gradientClass) {
+      selectedGradientClass = gradientClass;
+      highlightSelectedGradient();
+      updateBannerPreview();
+    }
+
+    function highlightSelectedGradient() {
+      const buttons = document.querySelectorAll('#gradientSelectorContainer button');
+      buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(selectedGradientClass)) {
+          btn.classList.add('border-white', 'scale-110');
+          btn.classList.remove('border-transparent');
+        } else {
+          btn.classList.remove('border-white', 'scale-110');
+          btn.classList.add('border-transparent');
+        }
+      });
+    }
+
+    function selectBadgeColor(badgeColorClass) {
+      selectedBadgeColorClass = badgeColorClass;
+      highlightSelectedBadgeColor();
+      updateBannerPreview();
+    }
+
+    function highlightSelectedBadgeColor() {
+      const buttons = document.querySelectorAll('#badgeColorSelectorContainer button');
+      buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(selectedBadgeColorClass)) {
+          btn.classList.add('border-white', 'scale-110');
+          btn.classList.remove('border-transparent');
+        } else {
+          btn.classList.remove('border-white', 'scale-110');
+          btn.classList.add('border-transparent');
+        }
+      });
+    }
+
+    function selectBannerIcon(iconClass) {
+      selectedIconClass = iconClass;
+      highlightSelectedIcon();
+      updateBannerPreview();
+    }
+
+    function highlightSelectedIcon() {
+      const buttons = document.querySelectorAll('#iconSelectorContainer button');
+      buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(selectedIconClass)) {
+          btn.classList.add('border-pink-500', 'text-white', 'bg-gray-700/90');
+          btn.classList.remove('border-gray-600', 'text-gray-300');
+        } else {
+          btn.classList.remove('border-pink-500', 'text-white', 'bg-gray-700/90');
+          btn.classList.add('border-gray-600', 'text-gray-300');
+        }
+      });
+    }
+
+    function selectIconColor(iconColorClass) {
+      selectedIconColorClass = iconColorClass;
+      highlightSelectedIconColor();
+      updateBannerPreview();
+    }
+
+    function highlightSelectedIconColor() {
+      const buttons = document.querySelectorAll('#iconColorSelectorContainer button');
+      buttons.forEach(btn => {
+        if (btn.getAttribute('onclick').includes(selectedIconColorClass)) {
+          btn.classList.add('border-white', 'scale-110');
+          btn.classList.remove('border-transparent');
+        } else {
+          btn.classList.remove('border-white', 'scale-110');
+          btn.classList.add('border-transparent');
+        }
+      });
+    }
+
+    async function saveBannerConfig() {
+      const active = document.getElementById('bannerActiveSwitch').checked;
+      const badge = document.getElementById('bannerBadgeInput').value;
+      const title = document.getElementById('bannerTitleInput').value;
+      const productId = document.getElementById('bannerProductLinkSelect').value;
+
+      const bannerConfig = {
+        active, badge, title,
+        gradient: selectedGradientClass,
+        badgeColor: selectedBadgeColorClass,
+        icon: selectedIconClass,
+        iconColor: selectedIconColorClass,
+        productId
+      };
+
+      const { error } = await supabaseClient.from('banner_config').upsert({ id: 1, config: bannerConfig });
+      if (!error) {
+        bannerConfigCache = bannerConfig;
+        alert('¡Banner guardado y sincronizado en Supabase!');
+        showMainMenu();
+      } else {
+        alert('Error al guardar banner: ' + error.message);
+      }
+    }
+
+    function prepareSaleSection() {
+      const now = new Date();
+      const dateFormatted = now.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'medium' });
+      document.getElementById('saleDateDisplay').value = dateFormatted;
+      document.getElementById('saleForm').reset();
+      document.getElementById('saleDateDisplay').value = dateFormatted;
+      populateSaleInventoryDropdown();
+      toggleBsFields();
+      switchSaleTab('form');
+    }
+
+    function switchSaleTab(tab) {
+      const btnForm = document.getElementById('tabBtnForm');
+      const btnHistory = document.getElementById('tabBtnHistory');
+      const formContainer = document.getElementById('saleFormContainer');
+      const historyContainer = document.getElementById('saleHistoryContainer');
+
+      if (tab === 'form') {
+        btnForm.className = 'py-2 rounded-lg bg-emerald-600 text-white transition text-center cursor-pointer';
+        btnHistory.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition text-center cursor-pointer';
+        formContainer.classList.remove('hidden');
+        historyContainer.classList.add('hidden');
+      } else {
+        btnHistory.className = 'py-2 rounded-lg bg-emerald-600 text-white transition text-center cursor-pointer';
+        btnForm.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition text-center cursor-pointer';
+        historyContainer.classList.remove('hidden');
+        formContainer.classList.add('hidden');
+        renderSalesHistory();
+      }
+    }
+
+    function populateSaleInventoryDropdown() {
+      const select = document.getElementById('saleInventorySelect');
+      select.innerHTML = '<option value="">-- Seleccionar producto --</option>' + inventoryCache.map(i => `
+        <option value="${i.id}">${i.name} (Disp: ${i.disponible} | $${i.venta})</option>
+      `).join('');
+    }
+
+    function loadInventoryItemForSale(id) {
+      if(!id) return;
+      const item = inventoryCache.find(i => i.id == id);
+      if(item) {
+        document.getElementById('saleBarcode').value = item.barcode || '';
+        document.getElementById('saleProdName').value = item.name;
+        document.getElementById('saleProdLine').value = item.line === 'skincare' ? 'Cuidado Personal' : 'Tecnología';
+        document.getElementById('salePrice').value = item.venta;
+      }
+    }
+
+    function searchProductByBarcode(barcode) {
+      if(!barcode.trim()) return;
+      const item = inventoryCache.find(i => i.barcode === barcode.trim() || i.name.toLowerCase().includes(barcode.toLowerCase()));
+      if(item) {
+        document.getElementById('saleInventorySelect').value = item.id;
+        loadInventoryItemForSale(item.id);
+      } else {
+        alert('No se encontró ningún producto con ese código o nombre.');
+      }
+    }
+
+    function triggerBarcodeScanner() {
+      const scanned = prompt("Introduce el código de barras o nombre del producto:");
+      if(scanned) {
+        document.getElementById('saleBarcode').value = scanned;
+        searchProductByBarcode(scanned);
+      }
+    }
+
+    function toggleBsFields() {
+      const method = document.getElementById('salePaymentMethod').value;
+      const bsFields = document.getElementById('bsPaymentFields');
+      if(method === 'pago_movil') bsFields.classList.remove('hidden');
+      else bsFields.classList.add('hidden');
+    }
+
+    async function handleSaleSubmit(e) {
+      e.preventDefault();
+      const prodName = document.getElementById('saleProdName').value;
+      const prodLine = document.getElementById('saleProdLine').value;
+      const qty = parseInt(document.getElementById('saleQty').value);
+      const price = parseFloat(document.getElementById('salePrice').value);
+      const method = document.getElementById('salePaymentMethod').value;
+      const amountBs = document.getElementById('saleAmountBs').value;
+      const ref = document.getElementById('saleRefNumber').value;
+      const clientName = document.getElementById('saleClientName').value;
+      const clientPhone = document.getElementById('saleClientPhone').value;
+      const now = new Date();
+      const dateFormatted = now.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'medium' });
+      const rawDateIso = now.toISOString().split('T')[0];
+      const currentUser = localStorage.getItem('nohva_current_user') || 'Admin';
+      const selectedId = document.getElementById('saleInventorySelect').value;
+
+      if(selectedId) {
+        const item = inventoryCache.find(i => i.id == selectedId);
+        if(item) {
+          if(item.disponible < qty) return alert(`Stock insuficiente. Solo quedan ${item.disponible} unidades.`);
+          item.disponible -= qty;
+          await supabaseClient.from('inventory').update({ disponible: item.disponible }).eq('id', item.id);
+        }
+      }
+
+      const saleRecord = {
+        id: Date.now(),
+        productName: prodName,
+        line: prodLine,
+        quantity: qty,
+        totalUsd: (qty * price).toFixed(2),
+        paymentMethod: method,
+        amountBs: amountBs ? parseFloat(amountBs) : null,
+        reference: ref || null,
+        clientName: clientName || 'Anónimo',
+        clientPhone: clientPhone || null,
+        date: dateFormatted,
+        dateIso: rawDateIso,
+        seller: currentUser
+      };
+
+      const { error } = await supabaseClient.from('sales_history').insert([saleRecord]);
+      if (!error) {
+        salesCache.unshift(saleRecord);
+        alert(`¡Venta registrada y sincronizada con éxito!`);
+        switchSaleTab('history');
+      } else {
+        alert("Error al registrar venta: " + error.message);
+      }
+    }
+
+    function clearDateFilter() {
+      document.getElementById('saleDateFilter').value = '';
+      renderSalesHistory();
+    }
+
+    function renderSalesHistory() {
+      const container = document.getElementById('salesHistoryList');
+      const selectedDate = document.getElementById('saleDateFilter').value;
+      const currentMonthPrefix = new Date().toISOString().slice(0, 7);
+      let monthlyTotal = 0;
+
+      salesCache.forEach(sale => {
+        if(sale.dateIso && sale.dateIso.startsWith(currentMonthPrefix)) {
+          monthlyTotal += parseFloat(sale.totalUsd || 0);
+        }
+      });
+      document.getElementById('monthlyTotalDisplay').innerText = `$${monthlyTotal.toFixed(2)}`;
+
+      let filtered = salesCache;
+      if(selectedDate) filtered = salesCache.filter(sale => sale.dateIso === selectedDate);
+      document.getElementById('salesCountBadge').innerText = `${filtered.length} ventas`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-gray-400 py-6">No hay registros de ventas.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(sale => `
+        <div class="bg-gray-700/60 p-3 rounded-xl border border-gray-600 text-xs space-y-1.5">
+          <div class="flex items-center justify-between font-bold text-white">
+            <span>${sale.quantity}x ${sale.productName}</span>
+            <span class="text-emerald-400">$${sale.totalUsd}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[11px] text-gray-300">
+            <div>Línea: <strong class="text-teal-300">${sale.line || 'Tecnología'}</strong></div>
+            <div>Método: <span class="capitalize text-amber-400">${sale.paymentMethod.replace('_', ' ')}</span></div>
+            <div>Cliente: ${sale.clientName}</div>
+            ${sale.amountBs ? `<div>Monto Bs: Bs. ${sale.amountBs}</div>` : ''}
+            ${sale.reference ? `<div>Ref: ${sale.reference}</div>` : ''}
+          </div>
+          <div class="flex justify-between items-center text-[9px] text-gray-400 pt-1 border-t border-gray-600/50">
+            <span>Fecha: ${sale.date}</span>
+            <span>Vendedor: <strong class="text-indigo-300">${sale.seller}</strong></span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setInventoryLine(line) {
+      currentInvLine = line;
+      currentInvCategory = 'all';
+      const btnTech = document.getElementById('invBtnTech');
+      const btnSkincare = document.getElementById('invBtnSkincare');
+      if (line === 'tech') {
+        btnTech.className = 'py-2 rounded-lg bg-teal-600 text-white font-bold transition cursor-pointer';
+        btnSkincare.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition cursor-pointer';
+      } else {
+        btnSkincare.className = 'py-2 rounded-lg bg-teal-600 text-white font-bold transition cursor-pointer';
+        btnTech.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition cursor-pointer';
+      }
+      renderInventoryCategories();
+      renderInventoryList();
+    }
+
+    function renderInventoryCategories() {
+      const container = document.getElementById('invCategoryContainer');
+      const allCats = getStoredCategories();
+      const cats = [{ id: 'all', icon: '✨', name: 'Todas' }, ...(allCats[currentInvLine] || [])];
+      container.innerHTML = cats.map(c => `
+        <button type="button" onclick="setInventoryCategory('${c.id}')" class="px-3 py-1.5 rounded-full flex-shrink-0 transition cursor-pointer ${currentInvCategory === c.id ? 'bg-teal-600 text-white font-bold' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}">
+          ${c.icon || ''} ${c.name}
+        </button>
+      `).join('');
+    }
+
+    function setInventoryCategory(catId) {
+      currentInvCategory = catId;
+      renderInventoryCategories();
+      renderInventoryList();
+    }
+
+    function openInventoryForm(id = null) {
+      document.getElementById('inventoryFormContainer').classList.remove('hidden');
+      if (id) {
+        const item = inventoryCache.find(i => i.id === id);
+        if (item) {
+          document.getElementById('editInvId').value = item.id;
+          document.getElementById('invName').value = item.name;
+          document.getElementById('invBarcode').value = item.barcode || '';
+          document.getElementById('invLine').value = item.line || 'tech';
+          updateInvSubcatDropdown();
+          document.getElementById('invCategory').value = item.category || 'audifonos';
+          document.getElementById('invIngresada').value = item.ingresada;
+          document.getElementById('invDisponible').value = item.disponible;
+          document.getElementById('invCosto').value = item.costo;
+          document.getElementById('invVenta').value = item.venta;
+          document.getElementById('invFormTitle').innerText = 'Editar Registro de Inventario';
+        }
+      } else {
+        document.getElementById('editInvId').value = '';
+        document.getElementById('inventoryForm').reset();
+        document.getElementById('invLine').value = currentInvLine;
+        updateInvSubcatDropdown();
+        document.getElementById('invFormTitle').innerText = 'Registrar Stock de Producto';
+      }
+    }
+
+    function closeInventoryForm() {
+      document.getElementById('inventoryFormContainer').classList.add('hidden');
+    }
+
+    async function handleInventorySubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('editInvId').value;
+      const currentUser = localStorage.getItem('nohva_current_user') || 'Admin';
+
+      const itemData = {
+        id: id ? parseInt(id) : Date.now(),
+        name: document.getElementById('invName').value,
+        barcode: document.getElementById('invBarcode').value.trim() || null,
+        line: document.getElementById('invLine').value,
+        category: document.getElementById('invCategory').value,
+        ingresada: parseInt(document.getElementById('invIngresada').value),
+        disponible: parseInt(document.getElementById('invDisponible').value),
+        costo: parseFloat(document.getElementById('invCosto').value),
+        venta: parseFloat(document.getElementById('invVenta').value),
+        lastUser: currentUser
+      };
+
+      const { error } = await supabaseClient.from('inventory').upsert(itemData);
+      if (!error) {
+        await loadAllDataFromSupabase();
+        closeInventoryForm();
+        renderInventoryList();
+        alert('¡Inventario guardado en Supabase!');
+      } else {
+        alert("Error al guardar inventario: " + error.message);
+      }
+    }
+
+    function renderInventoryList() {
+      const container = document.getElementById('inventoryList');
+      const search = document.getElementById('invSearchInput').value.toLowerCase();
+      const lowStockItems = inventoryCache.filter(i => i.disponible <= 3);
+      const alertBtn = document.getElementById('lowStockAlertBtn');
+
+      if (lowStockItems.length > 0) {
+        alertBtn.classList.remove('hidden');
+        document.getElementById('lowStockBadge').innerText = lowStockItems.length;
+      } else {
+        alertBtn.classList.add('hidden');
+      }
+
+      const filtered = inventoryCache.filter(i => {
+        const matchesLine = i.line === currentInvLine;
+        const matchesCategory = currentInvCategory === 'all' || i.category === currentInvCategory;
+        const matchesSearch = i.name.toLowerCase().includes(search) || (i.barcode && i.barcode.toLowerCase().includes(search));
+        return matchesLine && matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">No se encontraron registros.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const isLowStock = item.disponible <= 3;
+        return `
+          <div class="bg-gray-700/60 p-3 rounded-xl border ${isLowStock ? 'border-amber-500/80 bg-amber-950/20' : 'border-gray-600'} text-xs space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <h4 class="font-bold text-white text-sm truncate">${item.name}</h4>
+                ${isLowStock ? '<span class="bg-amber-500 text-gray-900 text-[9px] font-bold px-1.5 rounded-full flex-shrink-0">¡Agotándose!</span>' : ''}
+              </div>
+              <div class="flex gap-1 flex-shrink-0">
+                <button type="button" onclick="openInventoryForm(${item.id})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded cursor-pointer"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                <button type="button" onclick="deleteInventoryItem(${item.id})" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded cursor-pointer"><i class="fa-solid fa-trash text-[10px]"></i></button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 bg-gray-900/50 p-2 rounded-lg">
+              <div><span class="text-gray-400 text-[10px]">Código:</span> <strong class="text-indigo-300">${item.barcode || 'N/A'}</strong></div>
+              <div><span class="text-gray-400 text-[10px]">Disponibles:</span> <strong class="${isLowStock ? 'text-amber-400 font-black' : 'text-emerald-400'}">${item.disponible}</strong></div>
+              <div><span class="text-gray-400 text-[10px]">Costo:</span> <span class="text-gray-200">$${item.costo.toFixed(2)}</span></div>
+              <div><span class="text-gray-400 text-[10px]">Venta:</span> <span class="text-amber-400 font-bold">$${item.venta.toFixed(2)}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderLowStockList() {
+      const container = document.getElementById('lowStockList');
+      const lowStockItems = inventoryCache.filter(i => i.disponible <= 3);
+
+      if (lowStockItems.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-gray-400 py-6">¡Excelente! No hay productos agotándose.</p>`;
+        return;
+      }
+
+      container.innerHTML = lowStockItems.map(item => `
+        <div class="bg-gray-700/60 p-3 rounded-xl border border-amber-500/50 text-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-white text-sm">${item.name}</h4>
+            <span class="bg-amber-500 text-gray-900 text-[10px] font-black px-2 py-0.5 rounded-full">¡Quedan ${item.disponible}!</span>
+          </div>
+          <div class="flex justify-end gap-1 pt-1">
+            <button type="button" onclick="showSection('inventorySection'); openInventoryForm(${item.id});" class="bg-indigo-600 text-white px-3 py-1 rounded cursor-pointer">Actualizar Stock</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function deleteInventoryItem(id) {
+      if (confirm('¿Eliminar este registro?')) {
+        const { error } = await supabaseClient.from('inventory').delete().eq('id', id);
+        if (!error) {
+          await loadAllDataFromSupabase();
+          renderInventoryList();
+        } else {
+          alert("Error: " + error.message);
+        }
+      }
+    }
+
+    function setAdminLine(line) {
+      currentAdminLine = line;
+      currentAdminCategory = 'all';
+      const btnTech = document.getElementById('adminBtnTech');
+      const btnSkincare = document.getElementById('adminBtnSkincare');
+      if (line === 'tech') {
+        btnTech.className = 'py-2 rounded-lg bg-amber-600 text-white font-bold transition cursor-pointer';
+        btnSkincare.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition cursor-pointer';
+      } else {
+        btnSkincare.className = 'py-2 rounded-lg bg-amber-600 text-white font-bold transition cursor-pointer';
+        btnTech.className = 'py-2 rounded-lg text-gray-400 hover:text-white transition cursor-pointer';
+      }
+      renderAdminCategories();
+      renderAdminProductList();
+    }
+
+    function renderAdminCategories() {
+      const container = document.getElementById('adminCategoryContainer');
+      const allCats = getStoredCategories();
+      const cats = [{ id: 'all', icon: '✨', name: 'Todas' }, ...(allCats[currentAdminLine] || [])];
+      container.innerHTML = cats.map(c => `
+        <button type="button" onclick="setAdminCategory('${c.id}')" class="px-3 py-1.5 rounded-full flex-shrink-0 transition cursor-pointer ${currentAdminCategory === c.id ? 'bg-amber-600 text-white font-bold' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}">
+          ${c.icon || ''} ${c.name}
+        </button>
+      `).join('');
+    }
+
+    function setAdminCategory(catId) {
+      currentAdminCategory = catId;
+      renderAdminCategories();
+      renderAdminProductList();
+    }
+
+    function triggerFileInput() {
+      if (uploadedImages.length >= 10) return alert('Máximo 10 imágenes.');
+      document.getElementById('fileInput').click();
+    }
+
+    function handleFileSelect(event) {
+      const files = Array.from(event.target.files || []);
+      const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB por imagen
+      const remainingSlots = 10 - uploadedImages.length;
+
+      if (!files.length) return;
+
+      const oversizedFiles = files.filter(file => file.size > MAX_IMAGE_SIZE);
+      if (oversizedFiles.length) {
+        alert('Estas imágenes superan el máximo permitido de 5 MB:\n' +
+          oversizedFiles.map(file => `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`).join('\n'));
+      }
+
+      const validFiles = files.filter(file => file.type.startsWith('image/') && file.size <= MAX_IMAGE_SIZE);
+      if (validFiles.length < files.length - oversizedFiles.length) {
+        alert('Solo se permiten archivos de imagen válidos.');
+      }
+      if (uploadedImages.length >= 10) {
+        alert('Solo puedes adjuntar un máximo de 10 imágenes por producto.');
+        event.target.value = '';
+        return;
+      }
+      if (validFiles.length > remainingSlots) {
+        alert(`Puedes añadir ${remainingSlots} imagen(es) más. Solo se procesarán las primeras ${remainingSlots}.`);
+      }
+      const filesToProcess = validFiles.slice(0, remainingSlots);
+
+      filesToProcess.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1000;
+
+            if (width > height) {
+              if (width > maxDim) {
+                height *= maxDim / width;
+                width = maxDim;
+              }
+            } else {
+              if (height > maxDim) {
+                width *= maxDim / height;
+                height = maxDim;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+            uploadedImages.push(compressedDataUrl);
+            renderPreviewCarousel();
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      event.target.value = '';
+    }
+
+    function removeImage(index) {
+      uploadedImages.splice(index, 1);
+      renderPreviewCarousel();
+    }
+
+    function renderPreviewCarousel() {
+      const carousel = document.getElementById('previewCarousel');
+      const emptyState = document.getElementById('emptyUploadState');
+      if (uploadedImages.length === 0) {
+        carousel.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+      carousel.classList.remove('hidden');
+      let html = uploadedImages.map((imgSrc, idx) => `
+        <div class="relative w-24 h-24 flex-shrink-0 bg-gray-800 rounded-xl overflow-hidden border border-gray-600 shadow-sm">
+          <img src="${imgSrc}" class="w-full h-full object-cover">
+          ${idx === 0 ? `<span class="absolute top-1 left-1 bg-indigo-600 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded">Principal</span>` : ''}
+          <button type="button" onclick="removeImage(${idx})" class="absolute top-1 right-1 bg-red-600 text-white w-5 h-5 rounded-full text-[10px] font-bold">✕</button>
+        </div>
+      `).join('');
+      if (uploadedImages.length < 10) {
+        html += `
+          <div onclick="triggerFileInput()" class="w-24 h-24 flex-shrink-0 bg-gray-800 border-2 border-dashed border-indigo-500 rounded-xl flex flex-col items-center justify-center text-center p-2 cursor-pointer text-indigo-400">
+            <i class="fa-solid fa-plus text-xl mb-1"></i>
+            <span class="text-[10px] font-bold">Añadir más</span>
+          </div>
+        `;
+      }
+      carousel.innerHTML = html;
+    }
+
+   async function handleProductSubmit(e) {
+  e.preventDefault();
+  if (uploadedImages.length === 0) return alert('Adjunta al menos 1 imagen.');
+
+  const id = document.getElementById('editProductId').value;
+  const currentUser = localStorage.getItem('nohva_current_user') || 'Admin';
+  const now = new Date().toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' });
+
+  const productData = {
+    id: id ? parseInt(id) : Date.now(),
+    line: document.getElementById('prodLine').value,
+    category: document.getElementById('prodCategory').value,
+    name: document.getElementById('prodName').value,
+    price: parseFloat(document.getElementById('prodPrice').value),
+    discount: document.getElementById('prodDiscount').value === 'true',
+    deliveryType: document.getElementById('prodDeliveryType').value,
+    stockAlert: document.getElementById('prodStockAlert').value || null,
+    description: document.getElementById('prodDescription').value,
+    hashtags: document.getElementById('prodHashtags').value,
+    image: uploadedImages[0],
+    gallery: uploadedImages,
+    active: true,
+    lastModifiedBy: currentUser,
+    lastModifiedDate: now,
+    actionType: id ? 'Modificado' : 'Creado'
+  };
+
+  try {
+    // Intentar la conexión con Supabase
+    const { error } = await supabaseClient.from('products').upsert(productData);
+    
+    if (error) {
+      console.error('Supabase rechazó el producto:', error);
+      alert('Supabase rechazó el producto: ' + (error.message || JSON.stringify(error)));
+      return;
+    }
+    
+    await loadAllDataFromSupabase();
+    alert('¡Producto guardado en Supabase con éxito!');
+    showMainMenu();
+
+  } catch (err) {
+    console.error('Error crítico de red:', err);
+    
+    // Plan de respaldo local si la red de ABA/Inter/Movistar bloquea Supabase
+    alert('⚠️ Error de red detectado (Posible bloqueo del proveedor de internet).\n\nVamos a guardar una copia de respaldo en este navegador para que no pierdas tu trabajo.');
+    
+    let localProducts = JSON.parse(localStorage.getItem('nohva_local_products') || '[]');
+    const existingIndex = localProducts.findIndex(p => p.id === productData.id);
+    if (existingIndex >= 0) {
+      localProducts[existingIndex] = productData;
+    } else {
+      localProducts.unshift(productData);
+    }
+    localStorage.setItem('nohva_local_products', JSON.stringify(localProducts));
+    
+    alert('✅ Producto guardado localmente en tu dispositivo como respaldo.');
+    showMainMenu();
+  }
+}
+
+    function renderAdminProductList() {
+      const container = document.getElementById('adminProductList');
+      const search = document.getElementById('adminSearchInput').value.toLowerCase();
+
+      const filtered = productsCache.filter(p => {
+        const matchesLine = p.line === currentAdminLine;
+        const matchesCategory = currentAdminCategory === 'all' || p.category === currentAdminCategory;
+        const matchesSearch = p.name.toLowerCase().includes(search) || p.description.toLowerCase().includes(search);
+        return matchesLine && matchesCategory && matchesSearch;
+      });
+
+      document.getElementById('totalItemsCount').innerText = `${filtered.length} ítems`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-center text-xs text-gray-500 py-6">No se encontraron artículos.</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map((p) => `
+        <div class="bg-gray-700/60 p-3 rounded-xl border border-gray-600 flex items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <img src="${p.image}" class="w-12 h-12 object-cover rounded-lg border border-gray-500 flex-shrink-0">
+            <div class="min-w-0">
+              <h4 class="font-bold text-white truncate">${p.name}</h4>
+              <p class="text-[11px] text-amber-400 font-bold">$${p.price.toFixed(2)}</p>
+              ${p.lastModifiedBy ? `<p class="text-[9px] text-gray-400 mt-0.5">Última acción: <span class="text-indigo-300">${p.actionType || 'Editado'} por ${p.lastModifiedBy}</span></p>` : ''}
+            </div>
+          </div>
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="flex flex-col items-center">
+              <label class="switch">
+                <input type="checkbox" ${p.active !== false ? 'checked' : ''} onchange="toggleProductStatus(${p.id}, this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span class="text-[9px] text-gray-400 mt-0.5">${p.active !== false ? 'Visible' : 'Oculto'}</span>
+            </div>
+            <button type="button" onclick="editProduct(${p.id})" class="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg transition cursor-pointer"><i class="fa-solid fa-pen text-xs"></i></button>
+            <button type="button" onclick="deleteProduct(${p.id})" class="bg-red-600 hover:bg-red-500 text-white p-2 rounded-lg transition cursor-pointer"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function toggleProductStatus(id, isActive) {
+      const p = productsCache.find(prod => prod.id === id);
+      const currentUser = localStorage.getItem('nohva_current_user') || 'Admin';
+      if (p) {
+        p.active = isActive;
+        p.lastModifiedBy = currentUser;
+        p.actionType = isActive ? 'Habilitado' : 'Deshabilitado';
+        await supabaseClient.from('products').update({ active: isActive, lastModifiedBy: currentUser, actionType: p.actionType }).eq('id', id);
+        renderAdminProductList();
+      }
+    }
+
+    function editProduct(id) {
+      previousView = 'manage';
+      document.getElementById('backButtonText').innerText = 'Volver a Administrar Artículos';
+      const p = productsCache.find(prod => prod.id === id);
+      if (!p) return;
+
+      document.getElementById('editProductId').value = p.id;
+      document.getElementById('formTitleHeader').innerHTML = `<i class="fa-solid fa-pen-to-square"></i><span>Editar Artículo</span>`;
+      document.getElementById('prodName').value = p.name;
+      document.getElementById('prodLine').value = p.line;
+      updateSubcatDropdown();
+      document.getElementById('prodCategory').value = p.category;
+      document.getElementById('prodPrice').value = p.price;
+      document.getElementById('prodDiscount').value = p.discount ? 'true' : 'false';
+      document.getElementById('prodDeliveryType').value = p.deliveryType || 'delivery_gratis';
+      document.getElementById('prodStockAlert').value = p.stockAlert || '';
+      document.getElementById('prodDescription').value = p.description;
+      document.getElementById('prodHashtags').value = p.hashtags || '';
+
+      uploadedImages = p.gallery || [p.image];
+      renderPreviewCarousel();
+      showSection('addProductSection');
+    }
+
+    async function deleteProduct(id) {
+      if (confirm('¿Eliminar este artículo permanentemente?')) {
+        const { error } = await supabaseClient.from('products').delete().eq('id', id);
+        if (!error) {
+          await loadAllDataFromSupabase();
+          renderAdminProductList();
+        } else {
+          alert("Error: " + error.message);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

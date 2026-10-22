@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es" id="htmlTag">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nohva Store - Catálogo Digital</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .scroll-smooth-x {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+      white-space: nowrap;
+    }
+    @keyframes bounce-slow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .animate-bounce-slow {
+      animation: bounce-slow 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-12 transition-colors duration-200">
+
+  <!-- HEADER -->
+  <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 border-b border-gray-100 dark:border-gray-700 transition-colors">
+    <div class="max-w-md mx-auto px-4 py-3 flex flex-col items-center relative">
+      
+      <!-- Redes Sociales LADO IZQUIERDO -->
+      <div class="absolute left-4 top-3 flex items-center gap-1.5">
+        <a href="https://tiktok.com/@nohvastore" target="_blank" title="TikTok" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-black hover:text-white dark:hover:bg-black w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
+          <i class="fa-brands fa-tiktok"></i>
+        </a>
+        <a href="https://instagram.com/nohvastore" target="_blank" title="Instagram" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-pink-600 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
+          <i class="fa-brands fa-instagram"></i>
+        </a>
+      </div>
+
+      <!-- Redes Sociales LADO DERECHO -->
+      <div class="absolute right-4 top-3 flex items-center gap-1.5">
+        <a href="https://wa.me/584248966896" target="_blank" title="WhatsApp" class="bg-gray-100 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
+          <i class="fa-brands fa-whatsapp"></i>
+        </a>
+        <a href="admin.html" title="Panel Admin" class="bg-gray-100 dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
+          <i class="fa-solid fa-lock"></i>
+        </a>
+        <button onclick="toggleDarkMode()" class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-yellow-400 w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs cursor-pointer">
+          <i id="themeIcon" class="fa-solid fa-moon"></i>
+        </button>
+      </div>
+
+      <!-- Logo Imagen Centrado -->
+      <div class="text-center my-1 pt-1">
+        <img src="Logo - Nohva.png" alt="Nohva Store Logo" class="h-11 w-auto object-contain dark:invert transition-all duration-200" id="brandLogo">
+      </div>
+
+      <!-- Banner Delivery Gratis Local -->
+      <div class="w-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-lg py-1.5 px-3 mt-2 flex items-center justify-center gap-2 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
+        <i class="fa-solid fa-truck-fast text-emerald-600 dark:text-emerald-400"></i>
+        <span>Delivery <strong>GRATIS</strong> en El Tigre</span>
+      </div>
+
+      <!-- SELECTOR DE LÍNEA COMERCIAL -->
+      <div class="w-full grid grid-cols-2 gap-1.5 mt-3 p-1 bg-gray-100 dark:bg-gray-700/80 rounded-xl text-xs font-bold">
+        <button onclick="setCommercialLine('tech')" id="btnLineTech" class="py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-microchip text-indigo-500"></i>
+          <span>Tecnología</span>
+        </button>
+        <button onclick="setCommercialLine('skincare')" id="btnLineSkincare" class="py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-sparkles text-pink-500"></i>
+          <span>Cuidado Personal</span>
+        </button>
+      </div>
+
+      <!-- Calculadora Tasa BCV y Buscador -->
+      <div class="w-full mt-2.5 space-y-2">
+        <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-700/60 p-2 rounded-lg text-xs">
+          <span class="font-semibold text-gray-600 dark:text-gray-300 flex items-center gap-1">
+            <i class="fa-solid fa-arrows-rotate animate-spin text-indigo-500 hidden" id="bcvLoader"></i>
+            <i class="fa-solid fa-calculator" id="bcvIcon"></i>
+            Tasa BCV (Bs/$):
+          </span>
+          <div class="flex items-center gap-1">
+            <span class="text-gray-500 dark:text-gray-400 font-bold">Bs.</span>
+            <input type="number" id="bcvRate" value="36.50" readonly class="w-20 px-1.5 py-0.5 border dark:border-gray-600 rounded text-right font-bold text-gray-800 dark:text-white bg-gray-200 dark:bg-gray-800 focus:outline-none cursor-not-allowed">
+          </div>
+        </div>
+
+        <!-- Buscador -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+          <input type="text" id="searchInput" placeholder="Buscar producto en Nohva Store..." oninput="renderProducts()" class="w-full pl-9 pr-3 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-lg text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:bg-white dark:focus:bg-gray-800 focus:border-indigo-500 focus:outline-none transition">
+        </div>
+      </div>
+    </div>
+
+    <!-- NAVEGACIÓN Y FILTRO DE CATEGORÍAS -->
+    <div class="max-w-md mx-auto border-t border-gray-100 dark:border-gray-700 relative">
+      <div class="flex items-center px-4 py-2.5 gap-2 scroll-smooth-x no-scrollbar text-xs font-medium text-gray-600 dark:text-gray-300" id="categoryContainer">
+        <!-- Renderizado dinámico desde Supabase -->
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER DINÁMICO -->
+  <section id="dynamicBannerSection" class="max-w-md mx-auto px-4 mt-3 hidden">
+    <div id="bannerCard" onclick="handleBannerClick()" class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-3 text-white flex items-center justify-between shadow-sm cursor-pointer transition hover:opacity-95">
+      <div>
+        <span id="bannerBadge" class="bg-yellow-400 text-gray-900 font-bold text-[10px] px-2 py-0.5 rounded-full uppercase">Oferta de la semana</span>
+        <h3 id="bannerTitle" class="font-bold text-sm mt-1">Lévate tus Combos con Delivery Gratis</h3>
+      </div>
+      <i id="bannerIcon" class="fa-solid fa-fire text-2xl text-yellow-300 animate-bounce-slow"></i>
+    </div>
+  </section>
+
+  <!-- LISTA DE PRODUCTOS -->
+  <main class="max-w-md mx-auto px-4 mt-4">
+    <div id="productList" class="space-y-3">
+      <!-- Productos renderizados desde Supabase -->
+    </div>
+  </main>
+
+  <!-- MODAL DE MENÚ DE CATEGORÍAS -->
+  <div id="categoriesModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-xs rounded-2xl p-5 relative shadow-xl">
+      <div class="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-700">
+        <h3 class="font-bold text-sm flex items-center gap-2">
+          <i class="fa-solid fa-layer-group text-indigo-500"></i>
+          <span>Subcategorías</span>
+        </h3>
+        <button onclick="closeCategoriesModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold cursor-pointer">✕</button>
+      </div>
+
+      <div class="mt-3 space-y-1.5" id="categoriesModalList"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE DETALLE DEL PRODUCTO -->
+  <div id="productModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
+    <div class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-y-auto p-5 relative">
+      <button onclick="closeModal()" class="absolute top-3 right-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-600 dark:text-gray-300 w-8 h-8 rounded-full flex items-center justify-center font-bold cursor-pointer">✕</button>
+      
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // Configuración oficial de Supabase con cabecera global para Netlify
+    const SUPABASE_URL = 'https://hnqjmbgztkgfzienptiy.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW50aXkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc5MjY4NTI1MiwiZXhwIjoyMTA4MjYxMjUyfQ.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+      global: {
+        headers: { 'x-client-info': 'nohva-store-client' },
+      },
+    });
+
+    const WHATSAPP_NUMBER = "584248966896"; 
+    let activeCommercialLine = 'tech'; 
+    let activeCategory = 'all';
+    let productsCache = [];
+    let categoriesCache = {};
+    let bannerConfigCache = null;
+    let quantities = {};
+    let bannerLinkedProductId = '';
+
+    const defaultCategoriesByLine = {
+      tech: [
+        { id: 'audifonos', icon: '🎧', name: 'Audífonos' },
+        { id: 'cargadores', icon: '⚡', name: 'Cargadores' },
+        { id: 'relojes', icon: '⌚', name: 'Relojes' },
+        { id: 'gaming', icon: '🎮', name: 'Gaming' },
+        { id: 'auto', icon: '🚗', name: 'Auto' }
+      ],
+      skincare: [
+        { id: 'unidades', icon: '🧴', name: 'Unidades' },
+        { id: 'kits', icon: '✨', name: 'Kits' }
+      ]
+    };
+
+    window.onload = async () => {
+      if (localStorage.getItem('theme') === 'dark') {
+        document.getElementById('htmlTag').classList.add('dark');
+        document.getElementById('themeIcon').className = 'fa-solid fa-sun';
+      }
+
+      setCommercialLine('tech');
+      fetchBCVRate();
+      await loadDataFromSupabase();
+    };
+
+    async function loadDataFromSupabase() {
+      try {
+        const { data: prodData } = await supabaseClient.from('products').select('*');
+        if (prodData) {
+          productsCache = prodData;
+          productsCache.forEach(p => { if (!quantities[p.id]) quantities[p.id] = 1; });
+        }
+
+        const { data: catData } = await supabaseClient.from('categories').select('*');
+        if (catData && catData.length > 0) {
+          categoriesCache = {};
+          catData.forEach(row => { categoriesCache[row.line] = row.data; });
+        } else {
+          categoriesCache = defaultCategoriesByLine;
+        }
+
+        const { data: bannerData } = await supabaseClient.from('banner_config').select('*').eq('id', 1).single();
+        if (bannerData) bannerConfigCache = bannerData.config;
+
+        renderCategories();
+        loadStoreBanner();
+        renderProducts();
+      } catch (err) {
+        console.error("Error cargando desde Supabase:", err);
+      }
+    }
+
+    function loadStoreBanner() {
+      const config = bannerConfigCache || {
+        active: true,
+        badge: 'OFERTA DE LA SEMANA',
+        title: 'Lévate tus Combos con Delivery Gratis',
+        gradient: 'from-indigo-600 to-purple-600',
+        badgeColor: 'bg-yellow-400 text-gray-900',
+        icon: 'fa-fire',
+        iconColor: 'text-yellow-300',
+        productId: ''
+      };
+
+      const section = document.getElementById('dynamicBannerSection');
+      if (config.active === false) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      bannerLinkedProductId = config.productId || '';
+
+      const bannerCard = document.getElementById('bannerCard');
+      bannerCard.className = `bg-gradient-to-r ${config.gradient} rounded-xl p-3 text-white flex items-center justify-between shadow-sm cursor-pointer transition hover:opacity-95`;
+
+      const badge = document.getElementById('bannerBadge');
+      badge.innerText = config.badge;
+      badge.className = `${config.badgeColor} font-bold text-[10px] px-2 py-0.5 rounded-full uppercase`;
+
+      document.getElementById('bannerTitle').innerText = config.title;
+
+      const icon = document.getElementById('bannerIcon');
+      icon.className = `fa-solid ${config.icon} ${config.iconColor} text-2xl animate-bounce-slow`;
+    }
+
+    function handleBannerClick() {
+      if (bannerLinkedProductId) {
+        const p = productsCache.find(prod => prod.id == bannerLinkedProductId);
+        if (p) openModal(p.id);
+      }
+    }
+
+    function toggleDarkMode() {
+      const html = document.getElementById('htmlTag');
+      const icon = document.getElementById('themeIcon');
+      
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark');
+        icon.className = 'fa-solid fa-moon';
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.classList.add('dark');
+        icon.className = 'fa-solid fa-sun';
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    function setCommercialLine(line) {
+      activeCommercialLine = line;
+      activeCategory = 'all';
+
+      const btnTech = document.getElementById('btnLineTech');
+      const btnSkincare = document.getElementById('btnLineSkincare');
+
+      if (line === 'tech') {
+        btnTech.className = 'py-2 px-2 rounded-lg bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+        btnSkincare.className = 'py-2 px-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-800 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+      } else {
+        btnSkincare.className = 'py-2 px-2 rounded-lg bg-white dark:bg-gray-800 text-pink-600 dark:text-pink-400 shadow-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+        btnTech.className = 'py-2 px-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-800 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
+      }
+
+      renderCategories();
+      renderProducts();
+    }
+
+    async function fetchBCVRate() {
+      const loader = document.getElementById('bcvLoader');
+      const icon = document.getElementById('bcvIcon');
+      
+      try {
+        loader.classList.remove('hidden');
+        icon.classList.add('hidden');
+
+        const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.promedio) {
+            document.getElementById('bcvRate').value = data.promedio.toFixed(2);
+            renderProducts();
+          }
+        }
+      } catch (error) {
+        console.log("Error consultando la tasa BCV.", error);
+      } finally {
+        loader.classList.add('hidden');
+        icon.classList.remove('hidden');
+      }
+    }
+
+    function renderCategories() {
+      const container = document.getElementById('categoryContainer');
+      const allCats = categoriesCache[activeCommercialLine] || defaultCategoriesByLine[activeCommercialLine] || [];
+      const currentCats = [{ id: 'all', icon: '✨', name: 'Todos' }, ...allCats];
+
+      const categoryButtons = currentCats.map(cat => `
+        <button onclick="setCategory('${cat.id}')" class="px-3.5 py-1.5 rounded-full flex-shrink-0 whitespace-nowrap transition cursor-pointer flex items-center gap-1 ${activeCategory === cat.id ? 'bg-indigo-600 text-white font-semibold' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}">
+          <span>${cat.icon || ''}</span>
+          <span>${cat.name}</span>
+        </button>
+      `).join('');
+
+      container.innerHTML = `
+        <button onclick="openCategoriesModal()" class="px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-bold flex-shrink-0 flex items-center gap-1.5 shadow-sm cursor-pointer">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Secciones</span>
+        </button>
+        ${categoryButtons}
+      `;
+
+      const modalList = document.getElementById('categoriesModalList');
+      modalList.innerHTML = currentCats.map(cat => `
+        <button onclick="setCategory('${cat.id}'); closeCategoriesModal();" class="w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition cursor-pointer ${activeCategory === cat.id ? 'bg-indigo-600 text-white font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'}">
+          <span class="flex items-center gap-2"><span>${cat.icon || ''}</span><span>${cat.name}</span></span>
+          <i class="fa-solid fa-chevron-right text-[10px] opacity-70"></i>
+        </button>
+      `).join('');
+    }
+
+    function openCategoriesModal() { document.getElementById('categoriesModal').classList.remove('hidden'); }
+    function closeCategoriesModal() { document.getElementById('categoriesModal').classList.add('hidden'); }
+
+    function setCategory(id) {
+      activeCategory = id;
+      renderCategories();
+      renderProducts();
+    }
+
+    function updateQty(id, delta, event) {
+      if (event) event.stopPropagation();
+      quantities[id] = Math.max(1, (quantities[id] || 1) + delta);
+      renderProducts();
+    }
+
+    function calculateProductTotals(p, qty, bcv) {
+      let unitPrice = p.price;
+      let hasMayorDiscount = qty >= 6;
+
+      if (hasMayorDiscount) {
+        unitPrice = p.price * 0.88; 
+      }
+
+      const unitPriceUSD = unitPrice.toFixed(2);
+      const unitPriceBS = (unitPrice * bcv).toFixed(2);
+      const totalPriceUSD = (unitPrice * qty).toFixed(2);
+      const totalPriceBS = (unitPrice * qty * bcv).toFixed(2);
+
+      return { unitPriceUSD, unitPriceBS, totalPriceUSD, totalPriceBS, hasMayorDiscount };
+    }
+
+    function renderProducts() {
+      const bcv = parseFloat(document.getElementById('bcvRate').value) || 36.5;
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const listContainer = document.getElementById('productList');
+
+      const filtered = productsCache.filter(p => {
+        const isActive = p.active !== false;
+        const matchesLine = p.line === activeCommercialLine;
+        const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
+        const matchesSearch = p.name.toLowerCase().includes(search) || p.description.toLowerCase().includes(search);
+        return isActive && matchesLine && matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `
+          <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <i class="fa-solid fa-box-open text-3xl mb-2"></i>
+            <p class="text-sm">No se encontraron productos disponibles en esta sección.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = filtered.map(p => {
+        if (!quantities[p.id]) quantities[p.id] = 1;
+        const qty = quantities[p.id];
+        const { unitPriceUSD, unitPriceBS, totalPriceUSD, totalPriceBS, hasMayorDiscount } = calculateProductTotals(p, qty, bcv);
+        const originalUnitPriceUSD = p.price.toFixed(2);
+        const galleryImage = p.image || (p.gallery && p.gallery[0]) || '';
+
+        let deliveryBadgeHtml = '';
+        if (p.deliveryType === 'delivery_gratis') {
+          deliveryBadgeHtml = `<span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800"><i class="fa-solid fa-truck-fast"></i> Delivery Gratis</span>`;
+        } else if (p.deliveryType === 'sitio_centrico') {
+          deliveryBadgeHtml = `<span class="inline-flex items-center gap-1 bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-cyan-200 dark:border-cyan-800"><i class="fa-solid fa-location-dot"></i> Sitio Céntrico</span>`;
+        }
+
+        return `
+          <div onclick="openModal(${p.id})" class="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700/80 shadow-sm flex gap-3 items-center hover:border-indigo-200 dark:hover:border-indigo-500 transition cursor-pointer relative overflow-hidden">
+            
+            <div class="relative w-24 h-24 flex-shrink-0 bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden border dark:border-gray-600">
+              <img src="${galleryImage}" alt="${p.name}" class="w-full h-full object-cover">
+              ${p.discount ? `<span class="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">OFERTA</span>` : ''}
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-xs text-gray-900 dark:text-white truncate leading-tight">${p.name}</h4>
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">${p.description}</p>
+              
+              <div class="mt-1 flex items-baseline gap-1.5 flex-wrap">
+                <span class="text-sm font-black text-indigo-600 dark:text-indigo-400">$${totalPriceUSD}</span>
+                <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1 rounded">Bs. ${totalPriceBS}</span>
+              </div>
+
+              <div class="mt-1 flex items-center gap-1 flex-wrap">
+                ${deliveryBadgeHtml}
+              </div>
+
+              ${hasMayorDiscount ? `
+                <div class="mt-1 inline-flex items-center gap-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs">
+                  <i class="fa-solid fa-tags text-[8px]"></i>
+                  <span>¡Precio al Mayor (-12%) aplicado!</span>
+                </div>
+              ` : p.stockAlert ? `
+                <p class="text-[9.5px] text-red-500 dark:text-red-400 font-bold mt-0.5 flex items-center gap-1">
+                  <span>${p.stockAlert}</span>
+                </p>
+              ` : qty >= 2 ? `
+                <p class="text-[9.5px] text-indigo-500 dark:text-indigo-300 font-medium leading-none mt-0.5">
+                  ($${originalUnitPriceUSD} c/u)
+                </p>
+              ` : ''}
+
+              <div class="mt-2 flex items-center justify-between gap-1.5" onclick="event.stopPropagation()">
+                <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
+                  <button onclick="updateQty(${p.id}, -1, event)" class="px-2 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold cursor-pointer">-</button>
+                  <span class="px-2 font-bold text-gray-800 dark:text-white">${qty}</span>
+                  <button onclick="updateQty(${p.id}, 1, event)" class="px-2 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold cursor-pointer">+</button>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <button onclick="shareProduct(${p.id}, event)" title="Compartir producto" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-1.5 rounded-lg text-xs transition cursor-pointer">
+                    <i class="fa-solid fa-share-nodes"></i>
+                  </button>
+
+                  <button onclick="buyWhatsApp(${p.id}, event)" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer">
+                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                    <span>Pedir</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openModal(id) {
+      const p = productsCache.find(prod => prod.id === id);
+      if (!p) return;
+      const bcv = parseFloat(document.getElementById('bcvRate').value) || 36.5;
+      const qty = quantities[p.id] || 1;
+      const { unitPriceUSD, unitPriceBS, totalPriceUSD, totalPriceBS, hasMayorDiscount } = calculateProductTotals(p, qty, bcv);
+      const originalUnitPriceUSD = p.price.toFixed(2);
+      const originalUnitPriceBS = (p.price * bcv).toFixed(2);
+      const gallery = p.gallery || [p.image];
+
+      let deliveryText = "Delivery Gratis en El Tigre";
+      if (p.deliveryType === 'sitio_centrico') deliveryText = "Entrega en Sitio Céntrico";
+      if (p.deliveryType === 'sin_delivery') deliveryText = "Retiro en Tienda / Sin Delivery";
+
+      const modalContent = document.getElementById('modalContent');
+      modalContent.innerHTML = `
+        <div class="text-center">
+          <img id="modalMainImage" src="${gallery[0]}" alt="${p.name}" class="w-full h-48 object-cover rounded-xl mb-2 border dark:border-gray-700">
+          
+          ${gallery.length > 1 ? `
+            <div class="flex gap-1.5 justify-center overflow-x-auto no-scrollbar mb-3 py-1">
+              ${gallery.map(img => `<img src="${img}" onclick="document.getElementById('modalMainImage').src='${img}'" class="w-12 h-12 object-cover rounded-lg border dark:border-gray-600 cursor-pointer hover:border-indigo-500">`).join('')}
+            </div>
+          ` : ''}
+
+          <h3 class="font-bold text-base text-gray-900 dark:text-white">${p.name}</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">${p.description}</p>
+          
+          <div class="my-3 bg-indigo-50 dark:bg-indigo-950/50 p-3 rounded-xl border dark:border-indigo-900/50">
+            <div class="flex justify-around items-center">
+              <div>
+                <p class="text-[10px] uppercase font-bold text-indigo-400">Total USD</p>
+                <p class="text-xl font-black text-indigo-600 dark:text-indigo-400">$${totalPriceUSD}</p>
+              </div>
+              <div class="h-8 w-px bg-indigo-200 dark:bg-indigo-800"></div>
+              <div>
+                <p class="text-[10px] uppercase font-bold text-emerald-500">Total Bolívares</p>
+                <p class="text-base font-bold text-emerald-600 dark:text-emerald-400">Bs. ${totalPriceBS}</p>
+              </div>
+            </div>
+
+            ${hasMayorDiscount ? `
+              <div class="mt-2 pt-2 border-t border-indigo-100 dark:border-indigo-900/40 text-amber-600 dark:text-amber-400 text-xs font-bold flex items-center justify-center gap-1">
+                <i class="fa-solid fa-tags"></i>
+                <span>¡Precio al Mayor aplicado (-12% de descuento)!</span>
+              </div>
+            ` : qty >= 2 ? `
+              <p class="text-xs text-indigo-500 dark:text-indigo-300 font-semibold mt-2 pt-2 border-t border-indigo-100 dark:border-indigo-900/40">
+                Precio unitario: $${originalUnitPriceUSD} / Bs.${originalUnitPriceBS}
+              </p>
+            ` : ''}
+          </div>
+
+          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 mb-3 text-[10.5px] text-gray-600 dark:text-gray-300 flex items-center justify-center gap-2 font-medium">
+            <i class="fa-solid fa-shield-check text-emerald-500 text-sm"></i>
+            <span>Producto 100% Original • ${deliveryText}</span>
+          </div>
+
+          <div class="flex items-center justify-center gap-4 mb-4">
+            <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Cantidad:</span>
+            <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-sm">
+              <button onclick="updateQty(${p.id}, -1); openModal(${p.id});" class="px-3 py-1 font-bold text-gray-700 dark:text-gray-200 cursor-pointer">-</button>
+              <span class="px-3 font-bold text-gray-900 dark:text-white">${qty}</span>
+              <button onclick="updateQty(${p.id}, 1); openModal(${p.id});" class="px-3 py-1 font-bold text-gray-700 dark:text-gray-200 cursor-pointer">+</button>
+            </div>
+          </div>
+
+          <div class="flex gap-2">
+            <button onclick="shareProduct(${p.id}, event)" class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white font-bold p-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <i class="fa-solid fa-share-nodes"></i>
+            </button>
+            <button onclick="buyWhatsApp(${p.id})" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer">
+              <i class="fa-brands fa-whatsapp text-lg"></i>
+              <span>Pedir por WhatsApp</span>
+            </button>
+          </div>
+        </div>
+      `;
+      document.getElementById('productModal').classList.remove('hidden');
+    }
+
+    function closeModal() { document.getElementById('productModal').classList.add('hidden'); }
+
+    async function shareProduct(id, event) {
+      if (event) event.stopPropagation();
+      const p = productsCache.find(prod => prod.id === id);
+      const bcv = parseFloat(document.getElementById('bcvRate').value) || 36.5;
+      const priceUSD = p.price.toFixed(2);
+      const priceBS = (p.price * bcv).toFixed(2);
+      const imageUrl = p.image || (p.gallery && p.gallery[0]) || '';
+
+      const shortText = `✨ *${p.name}*\n💰 Precio: *$${priceUSD}* (Bs. ${priceBS})\n\n📍 ¡Encuéntralo en Nohva Store!`;
+      const isSecureWeb = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+
+      try {
+        if (isSecureWeb && navigator.canShare && imageUrl) {
+          const response = await fetch(imageUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `${p.name.replace(/[^a-z0-9]/gi, '_')}.jpg`, { type: blob.type || 'image/jpeg' });
+
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ title: `Nohva Store - ${p.name}`, text: shortText, files: [file] });
+            return;
+          }
+        }
+      } catch (err) {
+        console.log('Compartir con imagen no soportado:', err);
+      }
+
+      if (navigator.share && isSecureWeb) {
+        navigator.share({ title: `Nohva Store - ${p.name}`, text: shortText }).catch((err) => console.log(err));
+      } else {
+        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shortText)}`;
+        window.open(waUrl, '_blank');
+      }
+    }
+
+    function buyWhatsApp(id, event) {
+      if (event) event.stopPropagation();
+      const p = productsCache.find(prod => prod.id === id);
+      const qty = quantities[p.id] || 1;
+
+      let message = qty === 1 
+        ? `Hola, Nohva Store 👋 Estoy interesado en adquirir el producto: *${p.name}*. ¿Tienen disponibilidad?`
+        : `Hola, Nohva Store 👋 Estoy interesado en adquirir *${qty} unidades* del producto: *${p.name}*. ¿Tienen disponibilidad?`;
+
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    }
+  </script>
+</body>
+</html>
