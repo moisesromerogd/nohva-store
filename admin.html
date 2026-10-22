@@ -47,7 +47,7 @@
 
       <form onsubmit="handleLogin(event)" class="space-y-3 text-left text-xs pt-2">
         <div>
-          <label class="block font-medium text-gray-300 mb-1">Usuario:</label>
+          <label class="block font-medium text-gray-300 mb-1">Usuario o correo:</label>
           <input type="text" id="loginUser" required placeholder="Ej: Moises" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500">
         </div>
         <div>
@@ -792,7 +792,7 @@
     const SUPABASE_URL = 'https://hnqjmbgztgkfzienptiy.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW5wdGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODUyNTIsImV4cCI6MjEwODI2MTI1Mn0.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false },
+      auth: { persistSession: true, autoRefreshToken: true },
       global: {
         headers: { 'x-client-info': 'nohva-store-admin' },
       },
@@ -835,7 +835,7 @@
     };
 
     window.addEventListener('DOMContentLoaded', async () => {
-      applyLoginState();
+      await applyLoginState();
       await loadAllDataFromSupabase();
       updateSubcatDropdown();
       updateInvSubcatDropdown();
@@ -902,37 +902,84 @@
       closeEmojiPicker();
     }
 
-    function handleLogin(e) {
+    // ===== LOGIN con Supabase Auth (usuarios y contraseñas se editan en Supabase) =====
+    function loginEmail(user) {
+      const u = user.trim().toLowerCase();
+      return u.includes('@') ? u : u + '@nohvastore.com';
+    }
+
+    function displayNameFromUser(user) {
+      const meta = user.user_metadata || {};
+      if (meta.name) return meta.name;
+      const local = (user.email || 'Admin').split('@')[0];
+      return local.charAt(0).toUpperCase() + local.slice(1);
+    }
+
+    async function handleLogin(e) {
       e.preventDefault();
-      const user = document.getElementById('loginUser').value.trim();
-      const pass = document.getElementById('loginPass').value.trim();
-      const validUsers = { "Moises": "250926", "Shannon": "amoaminovio" };
+      const user = document.getElementById('loginUser').value;
+      const pass = document.getElementById('loginPass').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
 
-      if (validUsers[user] && validUsers[user] === pass) {
-        localStorage.setItem('nohva_admin_logged', 'true');
-        localStorage.setItem('nohva_current_user', user);
-        applyLoginState();
-      } else {
-        alert('Usuario o contraseña incorrectos.');
+      try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: loginEmail(user),
+          password: pass
+        });
+        if (error || !data || !data.user) {
+          alert('Usuario o contraseña incorrectos.');
+          return;
+        }
+        localStorage.setItem('nohva_current_user', displayNameFromUser(data.user));
+        document.getElementById('loginPass').value = '';
+        await applyLoginState();
+        await loadAllDataFromSupabase();
+        updateSubcatDropdown();
+        updateInvSubcatDropdown();
+        loadSavedBannerConfig();
+        populateBannerProductSelect();
+      } catch (err) {
+        console.error('Error de login:', err);
+        alert('No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.');
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
-    function applyLoginState() {
-      const isLogged = localStorage.getItem('nohva_admin_logged');
-      const currentUser = localStorage.getItem('nohva_current_user') || 'Admin';
-      if (isLogged === 'true') {
+    async function applyLoginState() {
+      let session = null;
+      try {
+        const res = await supabaseClient.auth.getSession();
+        session = res.data ? res.data.session : null;
+      } catch (err) {
+        console.error('Error leyendo sesión:', err);
+      }
+
+      if (session && session.user) {
+        const name = displayNameFromUser(session.user);
+        localStorage.setItem('nohva_current_user', name);
         document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('loggedUserBadge').innerText = `👤 ${currentUser}`;
-      } else {
-        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('loggedUserBadge').innerText = `👤 ${name}`;
+        return true;
       }
+      localStorage.removeItem('nohva_current_user');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      return false;
     }
 
-    function logoutAdmin() {
-      localStorage.removeItem('nohva_admin_logged');
+    async function logoutAdmin() {
+      try { await supabaseClient.auth.signOut(); } catch (err) { console.error(err); }
       localStorage.removeItem('nohva_current_user');
       document.getElementById('loginScreen').classList.remove('hidden');
     }
+
+    // Si la sesión expira o se cierra en otra pestaña, volver al login
+    supabaseClient.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        document.getElementById('loginScreen').classList.remove('hidden');
+      }
+    });
 
     function showSection(sectionId) {
       document.getElementById('mainMenuView').classList.add('hidden');
