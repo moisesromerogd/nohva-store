@@ -29,12 +29,51 @@
     .animate-bounce-slow {
       animation: bounce-slow 2s infinite ease-in-out;
     }
+
+    /* ===== Ventanas emergentes con apertura suave ===== */
+    .modal-overlay {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity .3s ease, visibility 0s linear .3s;
+    }
+    .modal-overlay.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity .3s ease, visibility 0s;
+    }
+    .modal-panel {
+      opacity: 0;
+      transform: translateY(18px) scale(.96);
+      transition: transform .38s cubic-bezier(.22, 1, .36, 1), opacity .3s ease;
+      will-change: transform, opacity;
+    }
+    .modal-overlay.is-open .modal-panel {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    /* Ficha del producto: sube desde abajo */
+    .sheet-panel {
+      opacity: 0;
+      transform: translateY(60px);
+      transition: transform .42s cubic-bezier(.22, 1, .36, 1), opacity .3s ease;
+      will-change: transform, opacity;
+    }
+    .modal-overlay.is-open .sheet-panel {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .modal-overlay, .modal-panel, .sheet-panel { transition-duration: 0.01s !important; }
+    }
+    body.modal-lock { overflow: hidden; }
   </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-12 transition-colors duration-200">
 
   <!-- HEADER -->
-  <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 border-b border-gray-100 dark:border-gray-700 transition-colors">
+  <header class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors">
     <div class="max-w-md mx-auto px-4 py-3 flex flex-col items-center relative">
       
       <!-- Redes Sociales LADO IZQUIERDO -->
@@ -97,11 +136,16 @@
           </div>
         </div>
 
-        <!-- Buscador -->
-        <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-          <input type="text" id="searchInput" placeholder="Buscar producto en Nohva Store..." oninput="renderProducts()" class="w-full pl-9 pr-3 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-lg text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:bg-white dark:focus:bg-gray-800 focus:border-indigo-500 focus:outline-none transition">
-        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BARRA FIJA: buscador + secciones + categorías (lo único que se queda arriba al hacer scroll) -->
+  <div id="stickyBar" class="sticky top-0 z-30 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700 transition-colors">
+    <div class="max-w-md mx-auto px-4 pt-2.5 pb-2">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
+        <input type="text" id="searchInput" placeholder="Buscar producto en Nohva Store..." oninput="renderProducts()" class="w-full pl-9 pr-3 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-lg text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:bg-white dark:focus:bg-gray-800 focus:border-indigo-500 focus:outline-none transition">
       </div>
     </div>
 
@@ -111,7 +155,7 @@
         <!-- Renderizado dinámico desde Supabase -->
       </div>
     </div>
-  </header>
+  </div>
 
   <!-- BANNER DINÁMICO -->
   <section id="dynamicBannerSection" class="max-w-md mx-auto px-4 mt-3 hidden">
@@ -132,8 +176,8 @@
   </main>
 
   <!-- MODAL DE MENÚ DE CATEGORÍAS -->
-  <div id="categoriesModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-xs rounded-2xl p-5 relative shadow-xl">
+  <div id="categoriesModal" onclick="if(event.target===this)closeCategoriesModal()" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="modal-panel bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-xs rounded-2xl p-5 relative shadow-xl">
       <div class="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-700">
         <h3 class="font-bold text-sm flex items-center gap-2">
           <i class="fa-solid fa-layer-group text-indigo-500"></i>
@@ -147,12 +191,18 @@
   </div>
 
   <!-- MODAL DE DETALLE DEL PRODUCTO -->
-  <div id="productModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 transition-opacity">
-    <div class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-y-auto p-5 relative">
+  <div id="productModal" onclick="if(event.target===this)closeModal()" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="sheet-panel bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-y-auto p-5 relative">
       <button onclick="closeModal()" class="absolute top-3 right-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-600 dark:text-gray-300 w-8 h-8 rounded-full flex items-center justify-center font-bold cursor-pointer">✕</button>
       
       <div id="modalContent"></div>
     </div>
+  </div>
+
+  <!-- VISOR DE FOTO EN GRANDE -->
+  <div id="imageViewer" onclick="closeImageViewer()" class="modal-overlay fixed inset-0 bg-black/90 flex items-center justify-center p-3" style="z-index:60">
+    <button type="button" onclick="closeImageViewer()" aria-label="Cerrar foto" class="absolute top-4 right-4 bg-white/15 hover:bg-white/25 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold cursor-pointer" style="z-index:61">✕</button>
+    <img id="imageViewerImg" src="" alt="" onclick="event.stopPropagation()" class="modal-panel max-w-full object-contain rounded-lg select-none" style="max-height:90vh">
   </div>
 
   <script>
@@ -355,8 +405,19 @@
       `).join('');
     }
 
-    function openCategoriesModal() { document.getElementById('categoriesModal').classList.remove('hidden'); }
-    function closeCategoriesModal() { document.getElementById('categoriesModal').classList.add('hidden'); }
+    function updateScrollLock() {
+      const anyOpen = document.querySelector('.modal-overlay.is-open');
+      document.body.classList.toggle('modal-lock', !!anyOpen);
+    }
+
+    function openCategoriesModal() {
+      document.getElementById('categoriesModal').classList.add('is-open');
+      updateScrollLock();
+    }
+    function closeCategoriesModal() {
+      document.getElementById('categoriesModal').classList.remove('is-open');
+      updateScrollLock();
+    }
 
     function setCategory(id) {
       activeCategory = id;
@@ -500,7 +561,10 @@
       const modalContent = document.getElementById('modalContent');
       modalContent.innerHTML = `
         <div class="text-center">
-          <img id="modalMainImage" src="${gallery[0]}" alt="${p.name}" class="w-full h-48 object-cover rounded-xl mb-2 border dark:border-gray-700">
+          <div class="relative mb-2 cursor-zoom-in" onclick="openImageViewer()">
+            <img id="modalMainImage" src="${gallery[0]}" alt="${p.name}" class="w-full h-48 object-cover rounded-xl border dark:border-gray-700">
+            <span class="absolute bottom-2 right-2 bg-black/55 text-white w-7 h-7 rounded-full flex items-center justify-center pointer-events-none"><i class="fa-solid fa-expand text-xs"></i></span>
+          </div>
           
           ${gallery.length > 1 ? `
             <div class="flex gap-1.5 justify-center overflow-x-auto no-scrollbar mb-3 py-1">
@@ -561,10 +625,37 @@
           </div>
         </div>
       `;
-      document.getElementById('productModal').classList.remove('hidden');
+      document.getElementById('productModal').classList.add('is-open');
+      updateScrollLock();
     }
 
-    function closeModal() { document.getElementById('productModal').classList.add('hidden'); }
+    function closeModal() {
+      document.getElementById('productModal').classList.remove('is-open');
+      updateScrollLock();
+    }
+
+    function openImageViewer() {
+      const main = document.getElementById('modalMainImage');
+      if (!main || !main.src) return;
+      const viewerImg = document.getElementById('imageViewerImg');
+      viewerImg.src = main.src;
+      viewerImg.alt = main.alt || '';
+      document.getElementById('imageViewer').classList.add('is-open');
+      updateScrollLock();
+    }
+
+    function closeImageViewer() {
+      document.getElementById('imageViewer').classList.remove('is-open');
+      updateScrollLock();
+    }
+
+    // Tecla Esc: cierra primero la foto grande, luego la ficha, luego el menú de secciones
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('imageViewer').classList.contains('is-open')) closeImageViewer();
+      else if (document.getElementById('productModal').classList.contains('is-open')) closeModal();
+      else if (document.getElementById('categoriesModal').classList.contains('is-open')) closeCategoriesModal();
+    });
 
     async function shareProduct(id, event) {
       if (event) event.stopPropagation();
