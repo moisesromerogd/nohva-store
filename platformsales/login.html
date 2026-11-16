@@ -16,8 +16,8 @@
       <p class="mt-1 text-sm text-slate-400">Acceso privado para el equipo</p>
     </div>
     <form id="login-form" class="space-y-4">
-      <label class="block text-sm">Correo electrónico
-        <input id="email" type="email" autocomplete="username" required class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 outline-none focus:border-indigo-500">
+      <label class="block text-sm">Usuario o correo electrónico
+        <input id="email" type="text" autocomplete="username" placeholder="moises, shannon o correo" required class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 outline-none focus:border-indigo-500">
       </label>
       <label class="block text-sm">Contraseña
         <input id="password" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 outline-none focus:border-indigo-500">
@@ -40,7 +40,7 @@
         const access = await nohvaRequireSession();
         if (access) window.location.replace('./');
       } catch (error) {
-        errorBox.textContent = 'No se pudo iniciar sesión. Verifica tus credenciales o consulta con un propietario.';
+        errorBox.textContent = 'No se pudo iniciar sesión. Verifica tu usuario y contraseña o consulta con un propietario.';
         errorBox.classList.remove('hidden');
       } finally {
         button.disabled = false; button.textContent = 'Ingresar';
