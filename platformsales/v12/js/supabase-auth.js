@@ -7,7 +7,7 @@
  * keys or provider API secrets in this file.
  */
 const NOHVA_SUPABASE_URL = 'https://hnqjmbgztgkfzienptiy.supabase.co';
-const NOHVA_SUPABASE_ANON_KEY = 'REPLACE_WITH_EXISTING_SUPABASE_ANON_KEY';
+const NOHVA_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW5wdGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODUyNTIsImV4cCI6MjEwODI2MTI1Mn0.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc';
 
 const nohvaSupabase = window.supabase.createClient(
   NOHVA_SUPABASE_URL,
