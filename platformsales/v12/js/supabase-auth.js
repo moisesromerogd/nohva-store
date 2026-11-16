@@ -21,7 +21,7 @@ let nohvaProfile = null;
 async function nohvaRequireSession() {
   const { data: { session }, error } = await nohvaSupabase.auth.getSession();
   if (error) throw error;
-  const onLoginPage = /\\/login\\.html$/.test(window.location.pathname);
+    const onLoginPage = window.location.pathname.endsWith('/login.html');
   if (!session) {
     if (!onLoginPage) window.location.replace('./login.html');
     return null;
