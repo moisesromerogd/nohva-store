@@ -25,6 +25,17 @@ as $$
   select coalesce(public.platform_role() = 'owner', false);
 $$;
 
+
+-- Prevent direct client inserts from bypassing the atomic validation below.
+-- Writes must go through the SECURITY DEFINER RPCs in this migration.
+drop policy if exists platform_sales_insert_as_self on public.platform_sales;
+drop policy if exists platform_sale_items_insert_parent_sale on public.platform_sale_items;
+drop policy if exists platform_payments_insert_self_parent_sale on public.platform_payments;
+
+revoke insert on table public.platform_sales from anon, authenticated;
+revoke insert on table public.platform_sale_items from anon, authenticated;
+revoke insert on table public.platform_payments from anon, authenticated;
+
 create or replace function public.platform_create_sale(
   p_client_name text,
   p_client_phone text,
