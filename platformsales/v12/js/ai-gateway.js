@@ -27,7 +27,7 @@
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW50aXB0aXkiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc5MjY4NTI1MiwiZXhwIjoyMTA4MjYxMjUyfQ.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc',
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW5wdGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODUyNTIsImV4cCI6MjEwODI2MTI1Mn0.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc',
         'Authorization': 'Bearer ' + data.session.access_token
       },
       body: JSON.stringify(payload)
