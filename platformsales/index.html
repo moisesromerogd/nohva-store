@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nohva Platform · Gestión</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./v12/js/supabase-auth.js"></script>
+  <script src="./v12/js/platform-data.js"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <div class="min-h-screen md:flex">
+    <aside class="w-full border-b border-slate-800 bg-slate-900 p-5 md:min-h-screen md:w-64 md:border-b-0 md:border-r">
+      <div class="mb-8 flex items-center gap-3">
+        <div class="grid h-10 w-10 place-items-center rounded-xl bg-indigo-600 font-black">N</div>
+        <div><p class="font-bold">Nohva Platform</p><p class="text-xs text-slate-400">Panel privado</p></div>
+      </div>
+      <nav class="space-y-2 text-sm">
+        <button data-tab="sales" class="tab-btn w-full rounded-lg bg-indigo-600/20 px-3 py-2 text-left text-indigo-300">Ventas</button>
+        <button data-tab="payments" class="tab-btn w-full rounded-lg px-3 py-2 text-left text-slate-300 hover:bg-slate-800">Abonos</button>
+        <button data-tab="team" data-owner-only class="tab-btn w-full rounded-lg px-3 py-2 text-left text-slate-300 hover:bg-slate-800">Equipo y permisos</button>
+        <button data-tab="finance" data-owner-only class="tab-btn w-full rounded-lg px-3 py-2 text-left text-slate-300 hover:bg-slate-800">Finanzas</button>
+      </nav>
+      <div class="mt-10 border-t border-slate-800 pt-4">
+        <p id="user-name" class="text-sm font-semibold"></p>
+        <p id="user-role" class="mb-3 text-xs text-slate-400"></p>
+        <button id="logout" class="rounded-lg border border-slate-700 px-3 py-2 text-xs hover:bg-slate-800">Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="min-w-0 flex-1 p-5 md:p-8">
+      <header class="mb-7 flex flex-wrap items-center justify-between gap-3">
+        <div><p class="text-xs uppercase tracking-widest text-indigo-400">Nohva Store</p><h1 id="page-title" class="text-2xl font-bold">Ventas</h1><p class="mt-1 text-sm text-slate-400">Registro y seguimiento de ventas del equipo</p></div>
+        <button id="refresh" class="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800">Actualizar</button>
+      </header>
+
+      <section id="sales-panel" class="space-y-5">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 class="mb-4 font-semibold">Registrar nueva venta</h2>
+          <form id="sale-form" class="grid gap-3 md:grid-cols-2">
+            <input id="client-name" placeholder="Nombre del cliente" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm">
+            <input id="client-phone" placeholder="Teléfono del cliente" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm">
+            <input id="product-name" required placeholder="Producto vendido" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm">
+            <input id="quantity" required type="number" min="1" value="1" placeholder="Cantidad" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm">
+            <input id="unit-price" required type="number" min="0.01" step="0.01" placeholder="Precio unitario USD" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm">
+            <select id="channel" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"><option value="WhatsApp">WhatsApp</option><option value="Instagram">Instagram</option><option value="Facebook Marketplace">Facebook Marketplace</option><option value="Tienda física">Tienda física</option><option value="Otro">Otro</option></select>
+            <input id="initial-payment" type="number" min="0" step="0.01" placeholder="Abono inicial USD (opcional)" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm">
+            <select id="payment-method" class="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm"><option value="Efectivo USD">Efectivo USD</option><option value="Pago móvil">Pago móvil</option><option value="Transferencia">Transferencia</option><option value="Zelle">Zelle</option><option value="Otro">Otro</option></select>
+            <div class="md:col-span-2"><button id="save-sale" class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold hover:bg-indigo-500">Guardar venta</button></div>
+          </form>
+          <p id="form-message" role="status" class="mt-3 text-sm"></p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <div class="mb-4 flex items-center justify-between"><h2 class="font-semibold">Ventas registradas</h2><span id="sales-count" class="text-xs text-slate-400"></span></div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[650px] text-left text-sm">
+              <thead class="text-xs text-slate-400"><tr><th class="pb-3">Fecha</th><th class="pb-3">Cliente</th><th class="pb-3">Productos</th><th class="pb-3">Total</th><th class="pb-3">Abonado</th><th class="pb-3">Saldo</th><th class="pb-3">Vendedor</th></tr></thead>
+              <tbody id="sales-rows" class="divide-y divide-slate-800"></tbody>
+            </table>
+          </div>
+          <p id="empty-sales" class="hidden py-8 text-center text-sm text-slate-500">Todavía no hay ventas registradas.</p>
+        </div>
+      </section>
+
+      <section id="placeholder-panel" class="hidden rounded-2xl border border-slate-800 bg-slate-900 p-6">
+        <h2 id="placeholder-title" class="text-lg font-semibold"></h2>
+        <p class="mt-2 text-sm text-slate-400">Este módulo está reservado para la siguiente fase de integración. No se muestran datos de prueba ni información financiera incompleta.</p>
+      </section>
+    </main>
+  </div>
+
+<script>
+(async function () {
+  const $ = id => document.getElementById(id);
+  try {
+    const access = await nohvaRequireSession();
+    if (!access) return;
+    const { profile } = access;
+    $('user-name').textContent = profile.display_name || access.session.user.email;
+    $('user-role').textContent = profile.role === 'owner' ? 'Propietario · Acceso completo' : 'Empleado · Acceso operativo';
+    nohvaGuardOwnerElements();
+    await loadSales();
+  } catch (error) {
+    console.error(error);
+    document.body.innerHTML = '<main class="mx-auto max-w-lg p-8 text-white"><h1 class="text-xl font-bold">No se pudo verificar el acceso</h1><p class="mt-2 text-slate-400">Actualiza la página o inicia sesión nuevamente.</p></main>';
+  }
+
+  async function loadSales() {
+    const rows = await NohvaData.listSales({ limit: 150 });
+    $('sales-count').textContent = rows.length + ' registros';
+    $('empty-sales').classList.toggle('hidden', rows.length !== 0);
+    $('sales-rows').innerHTML = rows.map(sale => {
+      const paid = (sale.platform_payments || []).reduce((sum, p) => sum + Number(p.amount_usd || 0), 0);
+      const products = (sale.platform_sale_items || []).map(i => i.product_name + ' × ' + i.quantity).join(', ');
+      const date = new Date(sale.sale_date).toLocaleDateString('es-VE');
+      return '<tr><td class="py-3 pr-3 text-slate-400">' + date + '</td><td class="py-3 pr-3">' + escapeHtml(sale.client_name || 'Sin nombre') + '</td><td class="py-3 pr-3 text-slate-300">' + escapeHtml(products) + '</td><td class="py-3 pr-3">$' + Number(sale.total_usd).toFixed(2) + '</td><td class="py-3 pr-3 text-emerald-400">$' + paid.toFixed(2) + '</td><td class="py-3 pr-3 text-amber-300">$' + Math.max(0, Number(sale.total_usd) - paid).toFixed(2) + '</td><td class="py-3 pr-3 text-xs text-slate-400">' + escapeHtml(sale.seller_id === access.session.user.id ? 'Tú' : 'Otro vendedor') + '</td></tr>';
+    }).join('');
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  $('sale-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = $('save-sale');
+    const message = $('form-message');
+    button.disabled = true; button.textContent = 'Guardando…'; message.textContent = '';
+    try {
+      const qty = Number($('quantity').value);
+      const price = Number($('unit-price').value);
+      const total = qty * price;
+      const initial = Number($('initial-payment').value || 0);
+      const payment = initial > 0 ? { amountUsd: initial, method: $('payment-method').value } : null;
+      if (initial > total) throw new Error('El abono inicial no puede superar el total de la venta.');
+      await NohvaData.createSale({
+        clientName: $('client-name').value,
+        clientPhone: $('client-phone').value,
+        channel: $('channel').value,
+        items: [{ productName: $('product-name').value, quantity: qty, unitPriceUsd: price }],
+        initialPayment: payment
+      });
+      $('sale-form').reset(); $('quantity').value = '1';
+      message.className = 'mt-3 text-sm text-emerald-400'; message.textContent = 'Venta registrada correctamente.';
+      await loadSales();
+    } catch (error) {
+      message.className = 'mt-3 text-sm text-rose-400'; message.textContent = error.message || 'No se pudo registrar la venta.';
+    } finally {
+      button.disabled = false; button.textContent = 'Guardar venta';
+    }
+  });
+
+  $('refresh').addEventListener('click', () => loadSales().catch(e => alert(e.message)));
+  $('logout').addEventListener('click', () => nohvaSignOut());
+  document.querySelectorAll('.tab-btn').forEach(button => button.addEventListener('click', () => {
+    const ownerOnly = button.hasAttribute('data-owner-only');
+    if (ownerOnly && !nohvaIsOwner()) return;
+    const sales = button.dataset.tab === 'sales' || button.dataset.tab === 'payments';
+    $('sales-panel').classList.toggle('hidden', !sales);
+    $('placeholder-panel').classList.toggle('hidden', sales);
+    $('page-title').textContent = button.textContent.trim();
+    $('placeholder-title').textContent = button.textContent.trim();
+    if (button.dataset.tab === 'sales') loadSales();
+  }));
+})();
+</script>
+</body>
+</html>
