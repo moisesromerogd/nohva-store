@@ -3,7 +3,7 @@
  * Public anon key only; provider API keys and service_role never belong in the browser.
  */
 const NOHVA_SUPABASE_URL = 'https://hnqjmbgztgkfzienptiy.supabase.co';
-const NOHVA_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW50aXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODUyNTIsImV4cCI6MjEwODI2MTI1MH0.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc';
+const NOHVA_SUPABASE_ANON_KEY = 'sb_publishable_Rd_Q8QgY_O0FUkpP4w9SLg_ZEQ_O01b';
 window.NOHVA_SUPABASE_ANON_KEY = NOHVA_SUPABASE_ANON_KEY;
 const nohvaSupabase = window.supabase.createClient(NOHVA_SUPABASE_URL, NOHVA_SUPABASE_ANON_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 let nohvaSession=null, nohvaProfile=null;
