@@ -35,3 +35,36 @@ Esta guía acompaña la rama `feature/nohva-platform-security`.
 
 ## No publicar todavía
 La rama contiene el primer esqueleto de Auth y la migración base. No desplegar hasta terminar la adaptación del frontend v12, la capa de inventario seguro, las funciones de invitación y las pruebas RLS.
+
+## Integración de IA (fase inicial)
+
+Se añadió `supabase/functions/nohva-ai/index.ts` y el cliente `platformsales/v12/js/ai-gateway.js`.
+
+### Secretos
+En Supabase → Edge Functions → Secrets deben existir:
+- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
+
+Los valores nunca deben guardarse en GitHub, HTML, JavaScript del navegador ni localStorage.
+
+### Despliegue de la función
+Desde la raíz del repositorio, con Supabase CLI autenticado y el proyecto enlazado:
+
+```bash
+supabase functions deploy nohva-ai
+```
+
+Mantener la verificación JWT activada. No utilizar `--no-verify-jwt`.
+
+### Alcance de esta fase
+- El endpoint `ping` informa qué proveedores tienen secretos configurados, sin revelar las claves.
+- OpenAI y Gemini admiten solicitudes autenticadas de diseño con texto e imágenes.
+- Grok y Claude responden como no disponibles.
+- El asistente con herramientas de negocio permanece bloqueado intencionalmente: sus funciones antiguas leen inventario, ventas y finanzas desde localStorage. No debe habilitarse hasta mover esas consultas a Supabase con controles de permisos en servidor.
+
+### Pendiente antes de considerarlo operativo
+- Desplegar la Edge Function en el proyecto correcto.
+- Integrar `ai-gateway.js` en el frontend v12 restaurado y retirar la antigua URL/clave de acceso guardada en localStorage.
+- Probar ping y generación de diseño con una sesión de propietario.
+- Probar límites, errores de proveedor y permisos con una sesión de empleado.
+- Migrar las herramientas del asistente a consultas server-side con autorización por rol.
