@@ -17,7 +17,7 @@
   if(!window.nohvaSupabase) throw new Error('La sesión segura de Nohva no está inicializada.');
   const {data,error}=await window.nohvaSupabase.auth.getSession();
   if(error||!data.session?.access_token) throw new Error('Tu sesión expiró. Inicia sesión nuevamente.');
-  const response=await fetch(FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token,'apikey':window.NOHVA_SUPABASE_ANON_KEY},body:JSON.stringify(payload)});
+  const response=await fetch(FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+data.session.access_token,'apikey':window.NOHVA_SUPABASE_ANON_KEY},body:JSON.stringify(payload),signal:AbortSignal.timeout(65000)}).catch(error=>{if(error.name==='TimeoutError'||error.name==='AbortError')throw new Error('La solicitud tardó demasiado. Gemini no respondió dentro del tiempo esperado; inténtalo nuevamente.');throw error;});
   const result=await response.json().catch(()=>({}));
   if(!response.ok) throw new Error(result.error||'No se pudo completar la solicitud de IA ('+response.status+').');
   return result;

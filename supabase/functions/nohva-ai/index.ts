@@ -110,6 +110,7 @@ async function callGemini(system: string, messages: any[]) {
               contents: toGeminiContents(messages),
               generationConfig: { temperature: 0.7 },
             }),
+            signal: AbortSignal.timeout(12000),
           },
         );
       } catch (error) {
