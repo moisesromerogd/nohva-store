@@ -1,708 +1,742 @@
 <!DOCTYPE html>
-<html lang="es" id="htmlTag">
+<html lang="es" class="h-full bg-slate-950">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nohva Store - Catálogo Digital</title>
+  <title>Nohva Sales & AI Studio - Unified Platform</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-    }
-  </script>
-  <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- FontAwesome / Lucide Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .scroll-smooth-x {
-      overflow-x: auto !important;
-      -webkit-overflow-scrolling: touch;
-      touch-action: pan-x;
-      white-space: nowrap;
-    }
-    @keyframes bounce-slow {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-    .animate-bounce-slow {
-      animation: bounce-slow 2s infinite ease-in-out;
-    }
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-    /* ===== Ventanas emergentes con apertura suave ===== */
-    .modal-overlay {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity .3s ease, visibility 0s linear .3s;
-    }
-    .modal-overlay.is-open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transition: opacity .3s ease, visibility 0s;
-    }
-    .modal-panel {
-      opacity: 0;
-      transform: translateY(18px) scale(.96);
-      transition: transform .38s cubic-bezier(.22, 1, .36, 1), opacity .3s ease;
-      will-change: transform, opacity;
-    }
-    .modal-overlay.is-open .modal-panel {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-    /* Ficha del producto: sube desde abajo */
-    .sheet-panel {
-      opacity: 0;
-      transform: translateY(60px);
-      transition: transform .42s cubic-bezier(.22, 1, .36, 1), opacity .3s ease;
-      will-change: transform, opacity;
-    }
-    .modal-overlay.is-open .sheet-panel {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .modal-overlay, .modal-panel, .sheet-panel { transition-duration: 0.01s !important; }
-    }
-    body.modal-lock { overflow: hidden; }
-  </style>
-</head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans min-h-screen pb-12 transition-colors duration-200">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-auth.js"></script>
+<script src="js/ai-gateway.js"></script>
+<script src="js/tailwind-config.js"></script>
+<script>try{var t=localStorage.getItem('nohva_theme');if(!t)t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="css/estilos.css"></head>
+<body class="h-full font-sans antialiased">
 
-  <!-- HEADER -->
-  <header class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors">
-    <div class="max-w-md mx-auto px-4 py-3 flex flex-col items-center relative">
-      
-      <!-- Redes Sociales LADO IZQUIERDO -->
-      <div class="absolute left-4 top-3 flex items-center gap-1.5">
-        <a href="https://tiktok.com/@nohvastore" target="_blank" title="TikTok" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-black hover:text-white dark:hover:bg-black w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
-          <i class="fa-brands fa-tiktok"></i>
-        </a>
-        <a href="https://instagram.com/nohvastore" target="_blank" title="Instagram" class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-pink-600 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
-          <i class="fa-brands fa-instagram"></i>
-        </a>
-      </div>
+  <!-- MAIN WRAPPER -->
+  <div class="min-h-screen flex flex-col md:flex-row">
 
-      <!-- Redes Sociales LADO DERECHO -->
-      <div class="absolute right-4 top-3 flex items-center gap-1.5">
-        <a href="https://wa.me/584248966896" target="_blank" title="WhatsApp" class="bg-gray-100 dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
-          <i class="fa-brands fa-whatsapp"></i>
-        </a>
-        <a href="admin.html" title="Panel Admin" class="bg-gray-100 dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-600 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs">
-          <i class="fa-solid fa-lock"></i>
-        </a>
-        <button onclick="toggleDarkMode()" class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-yellow-400 w-8 h-8 rounded-full flex items-center justify-center transition shadow-xs text-xs cursor-pointer">
-          <i id="themeIcon" class="fa-solid fa-moon"></i>
-        </button>
-      </div>
-
-      <!-- Logo Imagen Centrado -->
-      <div class="text-center my-1 pt-1">
-        <img src="Logo - Nohva.png" alt="Nohva Store Logo" class="h-11 w-auto object-contain dark:invert transition-all duration-200" id="brandLogo">
-      </div>
-
-      <!-- Banner Delivery Gratis Local -->
-      <div class="w-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-lg py-1.5 px-3 mt-2 flex items-center justify-center gap-2 text-emerald-700 dark:text-emerald-300 text-xs font-medium">
-        <i class="fa-solid fa-truck-fast text-emerald-600 dark:text-emerald-400"></i>
-        <span>Delivery <strong>GRATIS</strong> en El Tigre</span>
-      </div>
-
-      <!-- SELECTOR DE LÍNEA COMERCIAL -->
-      <div class="w-full grid grid-cols-2 gap-1.5 mt-3 p-1 bg-gray-100 dark:bg-gray-700/80 rounded-xl text-xs font-bold">
-        <button onclick="setCommercialLine('tech')" id="btnLineTech" class="py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-          <i class="fa-solid fa-microchip text-indigo-500"></i>
-          <span>Tecnología</span>
-        </button>
-        <button onclick="setCommercialLine('skincare')" id="btnLineSkincare" class="py-2 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-          <i class="fa-solid fa-sparkles text-pink-500"></i>
-          <span>Cuidado Personal</span>
-        </button>
-      </div>
-
-      <!-- Calculadora Tasa BCV y Buscador -->
-      <div class="w-full mt-2.5 space-y-2">
-        <div class="flex items-center justify-between bg-gray-100 dark:bg-gray-700/60 p-2 rounded-lg text-xs">
-          <span class="font-semibold text-gray-600 dark:text-gray-300 flex items-center gap-1">
-            <i class="fa-solid fa-arrows-rotate animate-spin text-indigo-500 hidden" id="bcvLoader"></i>
-            <i class="fa-solid fa-calculator" id="bcvIcon"></i>
-            Tasa BCV (Bs/$):
-          </span>
-          <div class="flex items-center gap-1">
-            <span class="text-gray-500 dark:text-gray-400 font-bold">Bs.</span>
-            <input type="number" id="bcvRate" value="36.50" readonly class="w-20 px-1.5 py-0.5 border dark:border-gray-600 rounded text-right font-bold text-gray-800 dark:text-white bg-gray-200 dark:bg-gray-800 focus:outline-none cursor-not-allowed">
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </header>
-
-  <!-- BARRA FIJA: buscador + secciones + categorías (lo único que se queda arriba al hacer scroll) -->
-  <div id="stickyBar" class="sticky top-0 z-30 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100 dark:border-gray-700 transition-colors">
-    <div class="max-w-md mx-auto px-4 pt-2.5 pb-2">
-      <div class="relative">
-        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-sm"></i>
-        <input type="text" id="searchInput" placeholder="Buscar producto en Nohva Store..." oninput="renderProducts()" class="w-full pl-9 pr-3 py-2 bg-gray-100 dark:bg-gray-700 border border-transparent rounded-lg text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:bg-white dark:focus:bg-gray-800 focus:border-indigo-500 focus:outline-none transition">
-      </div>
-    </div>
-
-    <!-- NAVEGACIÓN Y FILTRO DE CATEGORÍAS -->
-    <div class="max-w-md mx-auto border-t border-gray-100 dark:border-gray-700 relative">
-      <div class="flex items-center px-4 py-2.5 gap-2 scroll-smooth-x no-scrollbar text-xs font-medium text-gray-600 dark:text-gray-300" id="categoryContainer">
-        <!-- Renderizado dinámico desde Supabase -->
-      </div>
-    </div>
-  </div>
-
-  <!-- BANNER DINÁMICO -->
-  <section id="dynamicBannerSection" class="max-w-md mx-auto px-4 mt-3 hidden">
-    <div id="bannerCard" onclick="handleBannerClick()" class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-3 text-white flex items-center justify-between shadow-sm cursor-pointer transition hover:opacity-95">
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="side" class="w-full md:w-64 bg-slate-900/95 backdrop-blur-md border-r border-slate-800/80 flex flex-col justify-between shrink-0">
       <div>
-        <span id="bannerBadge" class="bg-yellow-400 text-gray-900 font-bold text-[10px] px-2 py-0.5 rounded-full uppercase">Oferta de la semana</span>
-        <h3 id="bannerTitle" class="font-bold text-sm mt-1">Lévate tus Combos con Delivery Gratis</h3>
-      </div>
-      <i id="bannerIcon" class="fa-solid fa-fire text-2xl text-yellow-300 animate-bounce-slow"></i>
-    </div>
-  </section>
+        <!-- Brand Header -->
+        <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+          <div class="flex flex-col items-start gap-1.5"><img id="brand-logo" class="nohva-logo" src="data:image/png;base64,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" alt="Nohva Store" style="height:38px;width:auto"><p class="text-[10px] font-semibold tracking-widest text-indigo-400 uppercase">Sales & AI Studio</p></div>
+        </div>
 
-  <!-- LISTA DE PRODUCTOS -->
-  <main class="max-w-md mx-auto px-4 mt-4">
-    <div id="productList" class="space-y-3">
-      <!-- Productos renderizados desde Supabase -->
-    </div>
-  </main>
-
-  <!-- MODAL DE MENÚ DE CATEGORÍAS -->
-  <div id="categoriesModal" onclick="if(event.target===this)closeCategoriesModal()" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="modal-panel bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-xs rounded-2xl p-5 relative shadow-xl">
-      <div class="flex items-center justify-between border-b pb-3 border-gray-100 dark:border-gray-700">
-        <h3 class="font-bold text-sm flex items-center gap-2">
-          <i class="fa-solid fa-layer-group text-indigo-500"></i>
-          <span>Subcategorías</span>
-        </h3>
-        <button onclick="closeCategoriesModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold cursor-pointer">✕</button>
-      </div>
-
-      <div class="mt-3 space-y-1.5" id="categoriesModalList"></div>
-    </div>
-  </div>
-
-  <!-- MODAL DE DETALLE DEL PRODUCTO -->
-  <div id="productModal" onclick="if(event.target===this)closeModal()" class="modal-overlay fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="sheet-panel bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-y-auto p-5 relative">
-      <button onclick="closeModal()" class="absolute top-3 right-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-600 dark:text-gray-300 w-8 h-8 rounded-full flex items-center justify-center font-bold cursor-pointer">✕</button>
-      
-      <div id="modalContent"></div>
-    </div>
-  </div>
-
-  <!-- VISOR DE FOTO EN GRANDE -->
-  <div id="imageViewer" onclick="closeImageViewer()" class="modal-overlay fixed inset-0 bg-black/90 flex items-center justify-center p-3" style="z-index:60">
-    <button type="button" onclick="closeImageViewer()" aria-label="Cerrar foto" class="absolute top-4 right-4 bg-white/15 hover:bg-white/25 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold cursor-pointer" style="z-index:61">✕</button>
-    <img id="imageViewerImg" src="" alt="" onclick="event.stopPropagation()" class="modal-panel max-w-full object-contain rounded-lg select-none" style="max-height:90vh">
-  </div>
-
-  <script>
-    // Configuración oficial de Supabase con cabecera global para Netlify
-    const SUPABASE_URL = 'https://hnqjmbgztgkfzienptiy.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhucWptYmd6dGdrZnppZW5wdGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODUyNTIsImV4cCI6MjEwODI2MTI1Mn0.JIHC8MmoDiSVwuzbxiUXxa1uurtozu8VLBbm0d7nCGc';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false },
-      global: {
-        headers: { 'x-client-info': 'nohva-store-client' },
-      },
-    });
-
-    const WHATSAPP_NUMBER = "584248966896"; 
-    let activeCommercialLine = 'tech'; 
-    let activeCategory = 'all';
-    let productsCache = [];
-    let categoriesCache = {};
-    let bannerConfigCache = null;
-    let quantities = {};
-    let bannerLinkedProductId = '';
-
-    const defaultCategoriesByLine = {
-      tech: [
-        { id: 'audifonos', icon: '🎧', name: 'Audífonos' },
-        { id: 'cargadores', icon: '⚡', name: 'Cargadores' },
-        { id: 'relojes', icon: '⌚', name: 'Relojes' },
-        { id: 'gaming', icon: '🎮', name: 'Gaming' },
-        { id: 'auto', icon: '🚗', name: 'Auto' }
-      ],
-      skincare: [
-        { id: 'unidades', icon: '🧴', name: 'Unidades' },
-        { id: 'kits', icon: '✨', name: 'Kits' }
-      ]
-    };
-
-    window.onload = async () => {
-      if (localStorage.getItem('theme') === 'dark') {
-        document.getElementById('htmlTag').classList.add('dark');
-        document.getElementById('themeIcon').className = 'fa-solid fa-sun';
-      }
-
-      setCommercialLine('tech');
-      fetchBCVRate();
-      await loadDataFromSupabase();
-    };
-
-    async function loadDataFromSupabase() {
-      try {
-        const { data: prodData } = await supabaseClient.from('products').select('*');
-        if (prodData) {
-          productsCache = prodData;
-          productsCache.forEach(p => { if (!quantities[p.id]) quantities[p.id] = 1; });
-        }
-
-        const { data: catData } = await supabaseClient.from('categories').select('*');
-        if (catData && catData.length > 0) {
-          categoriesCache = {};
-          catData.forEach(row => { categoriesCache[row.line] = row.data; });
-        } else {
-          categoriesCache = defaultCategoriesByLine;
-        }
-
-        const { data: bannerData } = await supabaseClient.from('banner_config').select('*').eq('id', 1).single();
-        if (bannerData) bannerConfigCache = bannerData.config;
-
-        renderCategories();
-        loadStoreBanner();
-        renderProducts();
-      } catch (err) {
-        console.error("Error cargando desde Supabase:", err);
-      }
-    }
-
-    function loadStoreBanner() {
-      const config = bannerConfigCache || {
-        active: true,
-        badge: 'OFERTA DE LA SEMANA',
-        title: 'Lévate tus Combos con Delivery Gratis',
-        gradient: 'from-indigo-600 to-purple-600',
-        badgeColor: 'bg-yellow-400 text-gray-900',
-        icon: 'fa-fire',
-        iconColor: 'text-yellow-300',
-        productId: ''
-      };
-
-      const section = document.getElementById('dynamicBannerSection');
-      if (config.active === false) {
-        section.classList.add('hidden');
-        return;
-      }
-
-      section.classList.remove('hidden');
-      bannerLinkedProductId = config.productId || '';
-
-      const bannerCard = document.getElementById('bannerCard');
-      bannerCard.className = `bg-gradient-to-r ${config.gradient} rounded-xl p-3 text-white flex items-center justify-between shadow-sm cursor-pointer transition hover:opacity-95`;
-
-      const badge = document.getElementById('bannerBadge');
-      badge.innerText = config.badge;
-      badge.className = `${config.badgeColor} font-bold text-[10px] px-2 py-0.5 rounded-full uppercase`;
-
-      document.getElementById('bannerTitle').innerText = config.title;
-
-      const icon = document.getElementById('bannerIcon');
-      icon.className = `fa-solid ${config.icon} ${config.iconColor} text-2xl animate-bounce-slow`;
-    }
-
-    function handleBannerClick() {
-      if (bannerLinkedProductId) {
-        const p = productsCache.find(prod => prod.id == bannerLinkedProductId);
-        if (p) openModal(p.id);
-      }
-    }
-
-    function toggleDarkMode() {
-      const html = document.getElementById('htmlTag');
-      const icon = document.getElementById('themeIcon');
-      
-      if (html.classList.contains('dark')) {
-        html.classList.remove('dark');
-        icon.className = 'fa-solid fa-moon';
-        localStorage.setItem('theme', 'light');
-      } else {
-        html.classList.add('dark');
-        icon.className = 'fa-solid fa-sun';
-        localStorage.setItem('theme', 'dark');
-      }
-    }
-
-    function setCommercialLine(line) {
-      activeCommercialLine = line;
-      activeCategory = 'all';
-
-      const btnTech = document.getElementById('btnLineTech');
-      const btnSkincare = document.getElementById('btnLineSkincare');
-
-      if (line === 'tech') {
-        btnTech.className = 'py-2 px-2 rounded-lg bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
-        btnSkincare.className = 'py-2 px-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-800 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
-      } else {
-        btnSkincare.className = 'py-2 px-2 rounded-lg bg-white dark:bg-gray-800 text-pink-600 dark:text-pink-400 shadow-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
-        btnTech.className = 'py-2 px-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-800 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer';
-      }
-
-      renderCategories();
-      renderProducts();
-    }
-
-    async function fetchBCVRate() {
-      const loader = document.getElementById('bcvLoader');
-      const icon = document.getElementById('bcvIcon');
-      
-      try {
-        loader.classList.remove('hidden');
-        icon.classList.add('hidden');
-
-        const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.promedio) {
-            document.getElementById('bcvRate').value = data.promedio.toFixed(2);
-            renderProducts();
-          }
-        }
-      } catch (error) {
-        console.log("Error consultando la tasa BCV.", error);
-      } finally {
-        loader.classList.add('hidden');
-        icon.classList.remove('hidden');
-      }
-    }
-
-    function renderCategories() {
-      const container = document.getElementById('categoryContainer');
-      const allCats = categoriesCache[activeCommercialLine] || defaultCategoriesByLine[activeCommercialLine] || [];
-      const currentCats = [{ id: 'all', icon: '✨', name: 'Todos' }, ...allCats];
-
-      const categoryButtons = currentCats.map(cat => `
-        <button onclick="setCategory('${cat.id}')" class="px-3.5 py-1.5 rounded-full flex-shrink-0 whitespace-nowrap transition cursor-pointer flex items-center gap-1 ${activeCategory === cat.id ? 'bg-indigo-600 text-white font-semibold' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}">
-          <span>${cat.icon || ''}</span>
-          <span>${cat.name}</span>
-        </button>
-      `).join('');
-
-      container.innerHTML = `
-        <button onclick="openCategoriesModal()" class="px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 font-bold flex-shrink-0 flex items-center gap-1.5 shadow-sm cursor-pointer">
-          <i class="fa-solid fa-layer-group"></i>
-          <span>Secciones</span>
-        </button>
-        ${categoryButtons}
-      `;
-
-      const modalList = document.getElementById('categoriesModalList');
-      modalList.innerHTML = currentCats.map(cat => `
-        <button onclick="setCategory('${cat.id}'); closeCategoriesModal();" class="w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition cursor-pointer ${activeCategory === cat.id ? 'bg-indigo-600 text-white font-bold' : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'}">
-          <span class="flex items-center gap-2"><span>${cat.icon || ''}</span><span>${cat.name}</span></span>
-          <i class="fa-solid fa-chevron-right text-[10px] opacity-70"></i>
-        </button>
-      `).join('');
-    }
-
-    function updateScrollLock() {
-      const anyOpen = document.querySelector('.modal-overlay.is-open');
-      document.body.classList.toggle('modal-lock', !!anyOpen);
-    }
-
-    function openCategoriesModal() {
-      document.getElementById('categoriesModal').classList.add('is-open');
-      updateScrollLock();
-    }
-    function closeCategoriesModal() {
-      document.getElementById('categoriesModal').classList.remove('is-open');
-      updateScrollLock();
-    }
-
-    function setCategory(id) {
-      activeCategory = id;
-      renderCategories();
-      renderProducts();
-    }
-
-    function updateQty(id, delta, event) {
-      if (event) event.stopPropagation();
-      quantities[id] = Math.max(1, (quantities[id] || 1) + delta);
-      renderProducts();
-    }
-
-    function calculateProductTotals(p, qty, bcv) {
-      let unitPrice = p.price;
-      let hasMayorDiscount = qty >= 6;
-
-      if (hasMayorDiscount) {
-        unitPrice = p.price * 0.88; 
-      }
-
-      const unitPriceUSD = unitPrice.toFixed(2);
-      const unitPriceBS = (unitPrice * bcv).toFixed(2);
-      const totalPriceUSD = (unitPrice * qty).toFixed(2);
-      const totalPriceBS = (unitPrice * qty * bcv).toFixed(2);
-
-      return { unitPriceUSD, unitPriceBS, totalPriceUSD, totalPriceBS, hasMayorDiscount };
-    }
-
-    function renderProducts() {
-      const bcv = parseFloat(document.getElementById('bcvRate').value) || 36.5;
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const listContainer = document.getElementById('productList');
-
-      const filtered = productsCache.filter(p => {
-        const isActive = p.active !== false;
-        const matchesLine = p.line === activeCommercialLine;
-        const matchesCategory = activeCategory === 'all' || p.category === activeCategory;
-        const matchesSearch = p.name.toLowerCase().includes(search) || p.description.toLowerCase().includes(search);
-        return isActive && matchesLine && matchesCategory && matchesSearch;
-      });
-
-      if (filtered.length === 0) {
-        listContainer.innerHTML = `
-          <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-            <i class="fa-solid fa-box-open text-3xl mb-2"></i>
-            <p class="text-sm">No se encontraron productos disponibles en esta sección.</p>
-          </div>
-        `;
-        return;
-      }
-
-      listContainer.innerHTML = filtered.map(p => {
-        if (!quantities[p.id]) quantities[p.id] = 1;
-        const qty = quantities[p.id];
-        const { unitPriceUSD, unitPriceBS, totalPriceUSD, totalPriceBS, hasMayorDiscount } = calculateProductTotals(p, qty, bcv);
-        const originalUnitPriceUSD = p.price.toFixed(2);
-        const galleryImage = p.image || (p.gallery && p.gallery[0]) || '';
-
-        let deliveryBadgeHtml = '';
-        if (p.deliveryType === 'delivery_gratis') {
-          deliveryBadgeHtml = `<span class="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800"><i class="fa-solid fa-truck-fast"></i> Delivery Gratis</span>`;
-        } else if (p.deliveryType === 'sitio_centrico') {
-          deliveryBadgeHtml = `<span class="inline-flex items-center gap-1 bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 text-[9.5px] font-bold px-1.5 py-0.5 rounded border border-cyan-200 dark:border-cyan-800"><i class="fa-solid fa-location-dot"></i> Sitio Céntrico</span>`;
-        }
-
-        return `
-          <div onclick="openModal(${p.id})" class="bg-white dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700/80 shadow-sm flex gap-3 items-center hover:border-indigo-200 dark:hover:border-indigo-500 transition cursor-pointer relative overflow-hidden">
-            
-            <div class="relative w-24 h-24 flex-shrink-0 bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden border dark:border-gray-600">
-              <img src="${galleryImage}" alt="${p.name}" class="w-full h-full object-cover">
-              ${p.discount ? `<span class="absolute top-1 left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">OFERTA</span>` : ''}
-            </div>
-
-            <div class="flex-1 min-w-0">
-              <h4 class="font-bold text-xs text-gray-900 dark:text-white truncate leading-tight">${p.name}</h4>
-              <p class="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">${p.description}</p>
-              
-              <div class="mt-1 flex items-baseline gap-1.5 flex-wrap">
-                <span class="text-sm font-black text-indigo-600 dark:text-indigo-400">$${totalPriceUSD}</span>
-                <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1 rounded">Bs. ${totalPriceBS}</span>
-              </div>
-
-              <div class="mt-1 flex items-center gap-1 flex-wrap">
-                ${deliveryBadgeHtml}
-              </div>
-
-              ${hasMayorDiscount ? `
-                <div class="mt-1 inline-flex items-center gap-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs">
-                  <i class="fa-solid fa-tags text-[8px]"></i>
-                  <span>¡Precio al Mayor (-12%) aplicado!</span>
-                </div>
-              ` : p.stockAlert ? `
-                <p class="text-[9.5px] text-red-500 dark:text-red-400 font-bold mt-0.5 flex items-center gap-1">
-                  <span>${p.stockAlert}</span>
-                </p>
-              ` : qty >= 2 ? `
-                <p class="text-[9.5px] text-indigo-500 dark:text-indigo-300 font-medium leading-none mt-0.5">
-                  ($${originalUnitPriceUSD} c/u)
-                </p>
-              ` : ''}
-
-              <div class="mt-2 flex items-center justify-between gap-1.5" onclick="event.stopPropagation()">
-                <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-xs">
-                  <button onclick="updateQty(${p.id}, -1, event)" class="px-2 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold cursor-pointer">-</button>
-                  <span class="px-2 font-bold text-gray-800 dark:text-white">${qty}</span>
-                  <button onclick="updateQty(${p.id}, 1, event)" class="px-2 py-1 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 font-bold cursor-pointer">+</button>
-                </div>
-
-                <div class="flex items-center gap-1">
-                  <button onclick="shareProduct(${p.id}, event)" title="Compartir producto" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-1.5 rounded-lg text-xs transition cursor-pointer">
-                    <i class="fa-solid fa-share-nodes"></i>
-                  </button>
-
-                  <button onclick="buyWhatsApp(${p.id}, event)" class="bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-sm transition cursor-pointer">
-                    <i class="fa-brands fa-whatsapp text-sm"></i>
-                    <span>Pedir</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function openModal(id) {
-      const p = productsCache.find(prod => prod.id === id);
-      if (!p) return;
-      const bcv = parseFloat(document.getElementById('bcvRate').value) || 36.5;
-      const qty = quantities[p.id] || 1;
-      const { unitPriceUSD, unitPriceBS, totalPriceUSD, totalPriceBS, hasMayorDiscount } = calculateProductTotals(p, qty, bcv);
-      const originalUnitPriceUSD = p.price.toFixed(2);
-      const originalUnitPriceBS = (p.price * bcv).toFixed(2);
-      const gallery = p.gallery || [p.image];
-
-      let deliveryText = "Delivery Gratis en El Tigre";
-      if (p.deliveryType === 'sitio_centrico') deliveryText = "Entrega en Sitio Céntrico";
-      if (p.deliveryType === 'sin_delivery') deliveryText = "Retiro en Tienda / Sin Delivery";
-
-      const modalContent = document.getElementById('modalContent');
-      modalContent.innerHTML = `
-        <div class="text-center">
-          <div class="relative mb-2 cursor-zoom-in" onclick="openImageViewer()">
-            <img id="modalMainImage" src="${gallery[0]}" alt="${p.name}" class="w-full h-48 object-cover rounded-xl border dark:border-gray-700">
-            <span class="absolute bottom-2 right-2 bg-black/55 text-white w-7 h-7 rounded-full flex items-center justify-center pointer-events-none"><i class="fa-solid fa-expand text-xs"></i></span>
-          </div>
+        <!-- NAVIGATION LINKS -->
+        <nav class="p-4 space-y-1">
+          <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Módulos Principales</p>
           
-          ${gallery.length > 1 ? `
-            <div class="flex gap-1.5 justify-center overflow-x-auto no-scrollbar mb-3 py-1">
-              ${gallery.map(img => `<img src="${img}" onclick="document.getElementById('modalMainImage').src='${img}'" class="w-12 h-12 object-cover rounded-lg border dark:border-gray-600 cursor-pointer hover:border-indigo-500">`).join('')}
+          <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-white bg-indigo-600/20 border border-indigo-500/30">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-chart-pie w-5 text-indigo-400"></i>
+              <span>Dashboard Principal</span>
             </div>
-          ` : ''}
+          </button>
 
-          <h3 class="font-bold text-base text-gray-900 dark:text-white">${p.name}</h3>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">${p.description}</p>
-          
-          <div class="my-3 bg-indigo-50 dark:bg-indigo-950/50 p-3 rounded-xl border dark:border-indigo-900/50">
-            <div class="flex justify-around items-center">
-              <div>
-                <p class="text-[10px] uppercase font-bold text-indigo-400">Total USD</p>
-                <p class="text-xl font-black text-indigo-600 dark:text-indigo-400">$${totalPriceUSD}</p>
-              </div>
-              <div class="h-8 w-px bg-indigo-200 dark:bg-indigo-800"></div>
-              <div>
-                <p class="text-[10px] uppercase font-bold text-emerald-500">Total Bolívares</p>
-                <p class="text-base font-bold text-emerald-600 dark:text-emerald-400">Bs. ${totalPriceBS}</p>
-              </div>
+          <button onclick="switchTab('sales')" id="nav-sales" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-file-invoice-dollar w-5 text-cyan-400"></i>
+              <span>Registro de Ventas</span>
             </div>
+            <span id="sales-count-badge" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-cyan-300 font-mono">3</span>
+          </button>
 
-            ${hasMayorDiscount ? `
-              <div class="mt-2 pt-2 border-t border-indigo-100 dark:border-indigo-900/40 text-amber-600 dark:text-amber-400 text-xs font-bold flex items-center justify-center gap-1">
-                <i class="fa-solid fa-tags"></i>
-                <span>¡Precio al Mayor aplicado (-12% de descuento)!</span>
-              </div>
-            ` : qty >= 2 ? `
-              <p class="text-xs text-indigo-500 dark:text-indigo-300 font-semibold mt-2 pt-2 border-t border-indigo-100 dark:border-indigo-900/40">
-                Precio unitario: $${originalUnitPriceUSD} / Bs.${originalUnitPriceBS}
-              </p>
-            ` : ''}
+          <button onclick="switchTab('inventory')" id="nav-inventory" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-boxes-stacked w-5 text-emerald-400"></i>
+              <span>Inventario</span>
+            </div>
+            <span id="inv-count-badge" class="text-[10px] bg-slate-800 px-2 py-0.5 rounded-full text-slate-300 font-mono">4</span>
+          </button>
+
+          <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-4 mb-2">Marketing & IA</p>
+
+          <button onclick="switchTab('design')" id="nav-design" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-palette w-5 text-purple-400"></i>
+              <span>Estudio de diseño</span>
+            </div>
+            <span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 uppercase">3 MODOS</span>
+          </button>
+
+          <button onclick="switchTab('copies')" id="nav-copies" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-pen-nib w-5 text-rose-400"></i>
+              <span>Publicaciones</span>
+            </div>
+          </button>
+
+          <button onclick="switchTab('ads')" id="nav-ads" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-rectangle-ad w-5 text-amber-400"></i>
+              <span>Anuncios Automáticos</span>
+            </div>
+            <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-mono">3</span>
+          </button>
+
+          <button onclick="switchTab('schedule')" id="nav-schedule" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-calendar-days w-5 text-blue-400"></i>
+              <span>Programación Semanal</span>
+            </div>
+          </button>
+
+          <button onclick="switchTab('inbox')" id="nav-inbox" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all text-slate-400 hover:text-white hover:bg-slate-800/60">
+            <div class="flex items-center space-x-3">
+              <i class="fa-solid fa-comments w-5 text-teal-400"></i>
+              <span>Inbox & Chatbot IA</span>
+            </div>
+          </button>
+        <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-4 mb-2">Inteligencia artificial</p>
+<button onclick="switchTab('aidesign')" id="nav-aidesign" class="nav-btn w-full flex items-center px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60"><i class="fa-solid fa-wand-magic-sparkles w-5 mr-3"></i>Diseñador con IA</button>
+<button onclick="switchTab('assistant')" id="nav-assistant" class="nav-btn w-full flex items-center px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60"><i class="fa-solid fa-robot w-5 mr-3"></i>Asistente IA</button>
+<p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-4 mb-2">Gestión</p>
+<button onclick="switchTab('clients')" id="nav-clients" class="nav-btn w-full flex items-center px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60"><i class="fa-solid fa-users w-5 text-sky-400 mr-3"></i>Clientes</button>
+<button onclick="switchTab('finance')" id="nav-finance" class="nav-btn w-full flex items-center px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60"><i class="fa-solid fa-sack-dollar w-5 text-lime-400 mr-3"></i>Gastos y ganancia</button>
+<button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full flex items-center px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60"><i class="fa-solid fa-gear w-5 text-slate-400 mr-3"></i>Ajustes y respaldo</button>
+</nav>
+      </div>
+
+      <!-- Tasa BCV & Footer -->
+      <div class="p-4 border-t border-slate-800 space-y-3 bg-slate-900/50">
+        <div class="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Tasa BCV Oficial</p>
+            <p class="text-xs font-bold text-emerald-400" id="current-bcv-display">1 USD = 36.50 Bs</p>
+            <p class="text-[10px]" id="bcv-status" style="color:var(--muted)"></p>
           </div>
+          <div class="flex"><button onclick="fetchBCV(true)" class="p-1.5 rounded-md text-slate-400 hover:text-white transition" title="Actualizar desde el BCV"><i class="fa-solid fa-rotate text-xs"></i></button><button onclick="promptChangeBCV()" class="p-1.5 rounded-md text-slate-400 hover:text-white transition" title="Poner la tasa a mano"><i class="fa-solid fa-pen-to-square text-xs"></i></button></div>
+        </div>
 
-          <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2 mb-3 text-[10.5px] text-gray-600 dark:text-gray-300 flex items-center justify-center gap-2 font-medium">
-            <i class="fa-solid fa-shield-check text-emerald-500 text-sm"></i>
-            <span>Producto 100% Original • ${deliveryText}</span>
-          </div>
-
-          <div class="flex items-center justify-center gap-4 mb-4">
-            <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">Cantidad:</span>
-            <div class="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-sm">
-              <button onclick="updateQty(${p.id}, -1); openModal(${p.id});" class="px-3 py-1 font-bold text-gray-700 dark:text-gray-200 cursor-pointer">-</button>
-              <span class="px-3 font-bold text-gray-900 dark:text-white">${qty}</span>
-              <button onclick="updateQty(${p.id}, 1); openModal(${p.id});" class="px-3 py-1 font-bold text-gray-700 dark:text-gray-200 cursor-pointer">+</button>
+        <div class="flex items-center justify-between pt-1">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-xs text-indigo-400 border border-slate-700">
+              NV
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-slate-200">Tienda Nohva</p>
+              <p class="text-[10px] text-slate-400">Emprendimiento Activo</p>
             </div>
           </div>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" title="Online"></span>
+        </div>
+      </div>
+    </aside>
 
-          <div class="flex gap-2">
-            <button onclick="shareProduct(${p.id}, event)" class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white font-bold p-3 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer">
-              <i class="fa-solid fa-share-nodes"></i>
-            </button>
-            <button onclick="buyWhatsApp(${p.id})" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer">
-              <i class="fa-brands fa-whatsapp text-lg"></i>
-              <span>Pedir por WhatsApp</span>
-            </button>
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col min-w-0 bg-slate-950 overflow-y-auto">
+
+      <!-- TOP BAR WITH QUICK TABS AND ACTIONS -->
+      <header class="h-16 border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
+        <div class="flex items-center space-x-4">
+          <button class="btn2 md:hidden" onclick="document.getElementById('side').classList.toggle('open')" aria-label="Menú"><i class="fa-solid fa-bars"></i></button>
+          <div id="tab-title-container" class="flex items-center space-x-2">
+            <span class="text-sm font-semibold text-slate-100" id="current-tab-title">Dashboard Principal</span>
+            <span class="text-slate-600">/</span>
+            <span class="text-xs text-slate-400" id="current-tab-subtitle">Resumen ejecutivo y control en tiempo real</span>
           </div>
         </div>
-      `;
-      document.getElementById('productModal').classList.add('is-open');
-      updateScrollLock();
-    }
 
-    function closeModal() {
-      document.getElementById('productModal').classList.remove('is-open');
-      updateScrollLock();
-    }
+        <!-- TOP BAR QUICK TAB SHORTCUTS & ACTION BUTTON -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+          <button id="theme-btn" class="btn2" onclick="toggleTheme()" title="Cambiar entre claro y oscuro"><i class="fa-solid fa-moon"></i></button>
 
-    function openImageViewer() {
-      const main = document.getElementById('modalMainImage');
-      if (!main || !main.src) return;
-      const viewerImg = document.getElementById('imageViewerImg');
-      viewerImg.src = main.src;
-      viewerImg.alt = main.alt || '';
-      document.getElementById('imageViewer').classList.add('is-open');
-      updateScrollLock();
-    }
+          <button onclick="openNewSaleModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:brightness-110 text-white font-bold text-xs sm:text-sm flex items-center space-x-2 shadow-lg shadow-indigo-600/30 transition">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Nueva venta</span>
+          </button>
+        </div>
+      </header>
 
-    function closeImageViewer() {
-      document.getElementById('imageViewer').classList.remove('is-open');
-      updateScrollLock();
-    }
+      <!-- TAB CONTENT CONTAINER -->
+      <div class="p-4 sm:p-6 space-y-6 max-w-7xl w-full mx-auto">
 
-    // Tecla Esc: cierra primero la foto grande, luego la ficha, luego el menú de secciones
-    document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape') return;
-      if (document.getElementById('imageViewer').classList.contains('is-open')) closeImageViewer();
-      else if (document.getElementById('productModal').classList.contains('is-open')) closeModal();
-      else if (document.getElementById('categoriesModal').classList.contains('is-open')) closeCategoriesModal();
-    });
+        <!-- ==================== 1. DASHBOARD PRINCIPAL ==================== -->
+        <section id="tab-dashboard" class="tab-content space-y-6">
+          
+          <!-- DUAL CURRENCY & KPI CARDS -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl relative overflow-hidden shadow-lg">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-400">Total Ventas ($ USD)</span>
+                <span class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-dollar-sign"></i>
+                </span>
+              </div>
+              <p class="text-2xl font-bold font-display text-white mt-2" id="kpi-usd">$1,245.00</p>
+              <p class="text-[11px] text-emerald-400 mt-1 flex items-center">
+                <i class="fa-solid fa-arrow-trend-up mr-1"></i> +24.5% este mes
+              </p>
+            </div>
 
-    async function shareProduct(id, event) {
-      if (event) event.stopPropagation();
-      const p = productsCache.find(prod => prod.id === id);
-      const bcv = parseFloat(document.getElementById('bcvRate').value) || 36.5;
-      const priceUSD = p.price.toFixed(2);
-      const priceBS = (p.price * bcv).toFixed(2);
-      const imageUrl = p.image || (p.gallery && p.gallery[0]) || '';
+            <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl relative overflow-hidden shadow-lg">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-400">Total Ventas (Bs)</span>
+                <span class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-money-bill-wave"></i>
+                </span>
+              </div>
+              <p class="text-2xl font-bold font-display text-white mt-2" id="kpi-bs">45,442.50 <span class="text-xs font-normal text-slate-400">Bs</span></p>
+              <p class="text-[11px] text-slate-400 mt-1">Calculado a Tasa BCV Oficial</p>
+            </div>
 
-      const shortText = `✨ *${p.name}*\n💰 Precio: *$${priceUSD}* (Bs. ${priceBS})\n\n📍 ¡Encuéntralo en Nohva Store!`;
-      const isSecureWeb = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+            <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl relative overflow-hidden shadow-lg">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-400">Pedidos Concretados</span>
+                <span class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-circle-check"></i>
+                </span>
+              </div>
+              <p class="text-2xl font-bold font-display text-white mt-2" id="kpi-orders">38 Pedidos</p>
+              <p class="text-[11px] text-cyan-400 mt-1">Origen principal: Instagram & WhatsApp</p>
+            </div>
 
-      try {
-        if (isSecureWeb && navigator.canShare && imageUrl) {
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          const file = new File([blob], `${p.name.replace(/[^a-z0-9]/gi, '_')}.jpg`, { type: blob.type || 'image/jpeg' });
+            <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl relative overflow-hidden shadow-lg">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium text-slate-400">ROI Anuncios (Ads)</span>
+                <span class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm">
+                  <i class="fa-solid fa-chart-line"></i>
+                </span>
+              </div>
+              <p class="text-2xl font-bold font-display text-amber-400 mt-2">4.2x ROAS</p>
+              <p class="text-[11px] text-slate-400 mt-1">$15.00/día en Meta Ads</p>
+            </div>
+          </div>
 
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ title: `Nohva Store - ${p.name}`, text: shortText, files: [file] });
-            return;
-          }
-        }
-      } catch (err) {
-        console.log('Compartir con imagen no soportado:', err);
-      }
+          <!-- SUMMARY BLOCKS GRID -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Movimiento Reciente de Ventas -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display font-bold text-sm text-white flex items-center">
+                  <i class="fa-solid fa-clock-rotate-left text-indigo-400 mr-2"></i>
+                  Movimiento Reciente de Ventas
+                </h3>
+                <button onclick="switchTab('sales')" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Ver Todo <i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+              </div>
+              <div class="space-y-3" id="dash-recent-sales"></div>
+            </div>
 
-      if (navigator.share && isSecureWeb) {
-        navigator.share({ title: `Nohva Store - ${p.name}`, text: shortText }).catch((err) => console.log(err));
-      } else {
-        const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shortText)}`;
-        window.open(waUrl, '_blank');
-      }
-    }
+            <!-- Anuncios Activos Summary -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display font-bold text-sm text-white flex items-center">
+                  <i class="fa-solid fa-bullhorn text-amber-400 mr-2"></i>
+                  Anuncios Activos (Meta & TikTok Ads)
+                </h3>
+                <button onclick="switchTab('ads')" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Gestionar Ads <i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+              </div>
+              <div class="space-y-3" id="dash-ads-preview"></div>
+            </div>
 
-    function buyWhatsApp(id, event) {
-      if (event) event.stopPropagation();
-      const p = productsCache.find(prod => prod.id === id);
-      const qty = quantities[p.id] || 1;
+            <!-- Próximas Publicaciones Programadas -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display font-bold text-sm text-white flex items-center">
+                  <i class="fa-solid fa-calendar-check text-blue-400 mr-2"></i>
+                  Próximas Publicaciones Programadas
+                </h3>
+                <button onclick="switchTab('schedule')" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Ver Calendario <i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+              </div>
+              <div class="space-y-2.5" id="dash-schedule-preview"></div>
+            </div>
 
-      let message = qty === 1 
-        ? `Hola, Nohva Store 👋 Estoy interesado en adquirir el producto: *${p.name}*. ¿Tienen disponibilidad?`
-        : `Hola, Nohva Store 👋 Estoy interesado en adquirir *${qty} unidades* del producto: *${p.name}*. ¿Tienen disponibilidad?`;
+            <!-- Alertas Rápidas de Inventario Bajo -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-display font-bold text-sm text-white flex items-center">
+                  <i class="fa-solid fa-triangle-exclamation text-rose-400 mr-2"></i>
+                  Alertas de Inventario Bajo
+                </h3>
+                <button onclick="switchTab('inventory')" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Reabastecer <i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+              </div>
+              <div class="space-y-2.5" id="dash-inventory-alerts"></div>
+            </div>
 
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-      window.open(url, '_blank');
-    }
-  </script>
+          </div>
+        </section>
+
+
+        <!-- ==================== 2. REGISTRO DE VENTAS DETALLADO ==================== -->
+        <section id="tab-sales" class="tab-content space-y-4 hidden">
+          <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="relative w-full md:w-96">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+              <input type="text" id="sales-search-input" onkeyup="filterSalesTable()" placeholder="Buscar por cliente, producto, canal o referencia de pago..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white">
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto justify-end flex-wrap">
+              <div class="seg-wrap">
+                <button type="button" id="sales-view-all" class="seg on" onclick="setSalesView('all')">Todas las ventas</button>
+                <button type="button" id="sales-view-debt" class="seg" onclick="setSalesView('debt')"><i class="fa-solid fa-user-clock mr-1"></i>Clientes que deben<span id="sales-debt-n" class="seg-n">0</span></button>
+              </div>
+              <button onclick="openNewSaleModal()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-cart-plus"></i>
+                <span>+ Registrar Nueva Venta</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="sales-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+
+          <div id="sales-debtors" class="hidden space-y-3"></div>
+
+          <div id="sales-table-wrap" class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-950 text-slate-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th class="p-3.5">ID / Fecha</th>
+                    <th class="p-3.5">Cliente</th>
+                    <th class="p-3.5">Productos</th>
+                    <th class="p-3.5">Cant.</th>
+                    <th class="p-3.5">Método de Pago</th>
+                    <th class="p-3.5">Total ($ USD)</th>
+                    <th class="p-3.5">Total (Bs BCV)</th>
+                    <th class="p-3.5">Cobrado / Saldo</th>
+                    <th class="p-3.5">Canal Origen</th>
+                    <th class="p-3.5">Estado</th>
+                    <th class="p-3.5">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-table-body" class="divide-y divide-slate-800/60"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== 3. INVENTARIO & STOCK (VERTICAL TABLE) ==================== -->
+        <section id="tab-inventory" class="tab-content space-y-4 hidden">
+ <div class="grid grid-cols-2 lg:grid-cols-5 gap-3" id="inv-kpis"></div>
+ <div class="card space-y-3">
+  <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+   <div class="col-span-2"><span class="lbl">Buscar</span><input id="iv-q" class="inp" placeholder="Nombre, ID o categoría" oninput="filterInventoryTable()"></div>
+   <div><span class="lbl">Categoría</span><select id="iv-cat" class="inp" onchange="filterInventoryTable()"></select></div>
+   <div><span class="lbl">Disponibilidad</span><select id="iv-st" class="inp" onchange="filterInventoryTable()"><option value="">Todas</option><option>EN STOCK</option><option>POCO STOCK</option><option>AGOTADO</option></select></div>
+   <div><span class="lbl">Ingreso desde</span><input id="iv-from" type="date" class="inp" onchange="filterInventoryTable()"></div>
+   <div><span class="lbl">Ingreso hasta</span><input id="iv-to" type="date" class="inp" onchange="filterInventoryTable()"></div>
+  </div>
+  <div class="flex items-center justify-between gap-2"><div class="flex items-center gap-3"><button class="btn2" onclick="clearInvFilters()">Limpiar filtros</button><span id="iv-count" class="text-xs" style="color:var(--muted)"></span></div><div class="flex items-center gap-2"><div class="flex gap-1" role="group" aria-label="Vista del inventario"><button id="iv-v-list" class="btn" onclick="setInvView('list')" title="Vista en lista"><i class="fa-solid fa-list mr-1"></i>Lista</button><button id="iv-v-grid" class="btn2" onclick="setInvView('grid')" title="Vista en mosaico"><i class="fa-solid fa-table-cells-large mr-1"></i>Mosaico</button></div><button class="btn" onclick="openProd()"><i class="fa-solid fa-plus mr-1"></i>Agregar producto</button></div></div>
+ </div>
+ <div id="inv-list-wrap" class="card p-0 overflow-x-auto"><table class="tbl"><thead><tr><th>Foto</th><th>ID</th><th>Producto</th><th>Categoría</th><th>Costo real</th><th>Precio venta</th><th>Stock</th><th>Vendidas</th><th>Ganancia aprox.</th><th></th></tr></thead><tbody id="inventory-table-body"></tbody></table></div>
+ <div id="inv-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" style="display:none"></div>
+ <p class="text-xs" style="color:var(--muted)">Ganancia aprox. = ventas registradas del producto menos su costo por las unidades vendidas. Se actualiza sola al registrar o editar ventas.</p>
+</section>
+
+
+        <!-- ==================== 4. GENERADOR DE ARTES VISUALES (3 MODOS) ==================== -->
+        <section id="tab-design" class="tab-content hidden">
+<div class="grid lg:grid-cols-[360px_1fr] gap-4">
+ <div class="space-y-3">
+  <div class="card space-y-3">
+   <div><span class="lbl">Producto</span><select id="design-prod-select" class="inp" onchange="autoFillDesignFromInventory()"></select></div>
+   <label class="btn2 inline-block cursor-pointer"><i class="fa-solid fa-image mr-1"></i>Subir foto del producto<input type="file" accept="image/*" class="hidden" onchange="loadPhoto(event)"></label>
+   <div><span class="lbl">Estilo de arte</span><div id="d-modes" class="grid grid-cols-3 gap-2"></div></div>
+  </div>
+  <div id="d-groups" class="space-y-3"></div>
+  <div class="card space-y-2"><h4 class="text-sm font-bold text-white">Referencias de estilo</h4>
+   <p class="text-[11px] text-slate-400">Sube diseños que te gusten. Se extrae su paleta de colores y se aplica a tu arte.</p>
+   <label class="btn2 inline-block cursor-pointer">Subir referencias<input type="file" accept="image/*" multiple class="hidden" onchange="loadRefs(event)"></label>
+   <div id="d-refs" class="flex gap-2 flex-wrap"></div><div id="d-pal" class="flex gap-2 flex-wrap"></div>
+   <button class="btn" onclick="applyStyle()">Aplicar línea gráfica</button></div>
+  <div class="card space-y-2"><h4 class="text-sm font-bold text-white">Instrucciones para la IA</h4>
+   <textarea id="d-instr" rows="3" class="inp" placeholder='Ej: agrega "Envío gratis", título más grande, fondo oscuro, sin footer, color #ff5500'></textarea>
+   <button class="btn" onclick="applyInstr()">Aplicar instrucciones</button><p id="d-log" class="text-[11px] text-slate-400"></p></div>
+ </div>
+ <div class="space-y-3 min-w-0">
+  <div class="card"><canvas id="d-canvas" style="max-height:74vh;width:auto;max-width:100%;margin:auto;display:block;border-radius:.75rem"></canvas>
+   <div class="flex flex-wrap gap-2 mt-3 justify-center"><button class="btn" onclick="genOptions()">Generar 3 opciones</button><button class="btn2" onclick="dlArt()">Descargar PNG</button><button class="btn2" onclick="saveGal()">Guardar en galería</button><button class="btn" onclick="useInPub()">Usar en publicación</button></div></div>
+  <div id="d-options" class="grid grid-cols-3 gap-3 hidden"></div>
+  <div class="card"><h4 class="text-sm font-bold text-white mb-2">Galería guardada</h4><div id="d-gallery" class="grid grid-cols-3 md:grid-cols-6 gap-2"></div></div>
+ </div>
+</div></section>
+
+<section id="tab-copies" class="tab-content hidden">
+<div class="grid lg:grid-cols-2 gap-4">
+ <div class="space-y-3 min-w-0">
+  <div class="card space-y-3">
+   <div><span class="lbl">Producto</span><select id="pub-prod" class="inp" onchange="pubFromProduct()"></select></div>
+   <div class="flex flex-wrap gap-2"><label class="btn2 cursor-pointer"><i class="fa-solid fa-image mr-1"></i>Adjuntar foto<input type="file" accept="image/*" class="hidden" onchange="pubPhoto(event)"></label><button class="btn2" onclick="pubInv()">Foto del inventario</button><button class="btn2" onclick="pubArt()">Arte del estudio</button></div>
+  </div>
+  <div id="p-groups" class="space-y-3"></div>
+  <button class="btn w-full" onclick="genText()"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Generar textos con estas opciones</button>
+ </div>
+ <div class="space-y-3 min-w-0 lg:sticky lg:top-20 self-start">
+  <div class="flex gap-2" id="p-tabs"></div>
+  <div id="p-prev" class="card"></div>
+  <div class="card space-y-2"><div class="flex gap-2"><input id="p-date" type="datetime-local" class="inp"><button class="btn2 whitespace-nowrap" onclick="schedPub()">Programar</button></div>
+   <div class="flex gap-2"><button class="btn2" onclick="copyPub()">Copiar texto</button><button class="btn2" onclick="dlPub()">Descargar imagen</button></div></div>
+ </div>
+</div></section>
+
+<section id="tab-aidesign" class="tab-content hidden">
+<div class="grid lg:grid-cols-[340px_1fr] gap-4">
+ <div class="space-y-3">
+  <div class="card space-y-3"><h4 class="text-sm font-bold text-white">Producto</h4>
+   <select id="ad2-prod" class="inp" onchange="aiProdChange()"></select>
+   <input id="ad2-name" class="inp" placeholder="Nombre del producto">
+   <div class="grid grid-cols-2 gap-2"><input id="ad2-price" type="number" step="0.01" class="inp" placeholder="Precio USD"><select id="ad2-fmt" class="inp"><option value="1080x1080">Cuadrado 1:1</option><option value="1080x1350" selected>Vertical 4:5</option><option value="1080x1920">Historia 9:16</option></select></div>
+   <div class="flex items-center gap-3"><img id="ad2-photo" class="w-16 h-16 rounded-lg object-cover" style="background:var(--surface2)" alt=""><label class="btn2 cursor-pointer">Adjuntar otra foto<input type="file" accept="image/*" class="hidden" onchange="aiPhoto(event)"></label></div>
+   <div><span class="lbl">Diseñar con</span><select id="ad2-prov" class="inp" onchange="cfg.provider=this.value;save();provHint()"></select><p id="ad2-provhint" class="text-[11px] mt-1" style="color:var(--muted)"></p></div>
+   <label class="flex items-center gap-2 text-xs" style="color:var(--text2)"><input type="checkbox" id="ad2-footer" checked>Incluir el footer fijo de la tienda</label></div>
+  <div class="card space-y-3"><h4 class="text-sm font-bold text-white">Biblioteca de estilo</h4>
+   <p class="text-[11px]" style="color:var(--muted)">Sube diseños tuyos y ponles una categoría. Cuando la nombres en tu pedido («estilo de tecnología»), la IA los usa como referencia.</p>
+   <div class="grid grid-cols-2 gap-2"><input id="ref-cat" list="ref-cats" class="inp" placeholder="Categoría"><label class="btn2 text-center cursor-pointer">Subir diseños<input type="file" multiple accept="image/*" class="hidden" onchange="addRefs(event)"></label></div><datalist id="ref-cats"></datalist>
+   <div id="ref-grid" class="grid grid-cols-4 gap-2"></div></div>
+ </div>
+ <div class="card flex flex-col" style="min-height:70vh"><div id="ad2-chat" class="chat flex-1"></div>
+  <div class="mt-3 flex gap-2 items-end"><textarea id="ad2-in" rows="2" class="inp" placeholder="Describe el diseño que quieres…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiDesignSend()}"></textarea><div class="flex flex-col gap-2"><button class="btn" onclick="aiDesignSend()">Enviar</button><button class="btn2" onclick="aiDesignReset()">Nueva</button></div></div></div>
+</div></section>
+<section id="tab-assistant" class="tab-content hidden"><div class="card flex flex-col" style="min-height:74vh;max-width:900px;margin:auto"><div id="as-chat" class="chat flex-1"></div>
+ <div id="as-chips" class="flex flex-wrap gap-2 mt-3"></div>
+ <div class="mt-3 flex gap-2 items-end"><textarea id="as-in" rows="2" class="inp" placeholder="Pregunta, pide un cálculo o un reporte…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();asSend()}"></textarea><div class="flex flex-col gap-2"><button class="btn" onclick="asSend()">Enviar</button><button class="btn2" onclick="asReset()">Nueva</button></div></div>
+ <label class="flex items-center gap-2 text-xs mt-2" style="color:var(--muted)"><input type="checkbox" id="as-web">Permitir búsqueda en internet</label></div></section>
+<section id="tab-ads" class="tab-content space-y-4 hidden">
+ <div class="card space-y-3"><h3 class="font-display font-bold text-white">Nueva campaña</h3>
+  <p class="text-xs text-amber-300">La IA arma y optimiza el plan. Para publicarlo solo en Meta/TikTok hay que conectar sus cuentas (paso aparte); mientras tanto queda programado aquí.</p>
+  <div class="grid md:grid-cols-4 gap-3">
+   <div><span class="lbl">Producto</span><select id="ad-prod" class="inp"></select></div>
+   <div><span class="lbl">Objetivo</span><select id="ad-goal" class="inp"><option>Mensajes a WhatsApp</option><option>Ventas</option><option>Tráfico a la tienda</option><option>Reconocimiento</option></select></div>
+   <div><span class="lbl">Plataforma</span><select id="ad-plat" class="inp"><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>Instagram + Facebook</option></select></div>
+   <div><span class="lbl">Presupuesto diario (USD)</span><input id="ad-budget" type="number" min="1" value="5" class="inp"></div>
+   <div><span class="lbl">Duración (días)</span><input id="ad-days" type="number" min="1" value="7" class="inp"></div>
+   <div><span class="lbl">Ubicación</span><input id="ad-loc" class="inp" value="El Tigre, Anzoátegui"></div>
+   <div><span class="lbl">Edad</span><input id="ad-age" class="inp" value="20-45"></div>
+   <div><span class="lbl">Inicio</span><input id="ad-start" type="datetime-local" class="inp"></div>
+  </div>
+  <div class="flex gap-2"><button class="btn" onclick="optimizeAd()"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Optimizar con IA</button><button class="btn2" onclick="scheduleAd()">Programar campaña</button></div>
+  <div id="ad-plan" contenteditable="true" class="text-sm text-slate-200 bg-slate-950 rounded-lg p-3 hidden"></div>
+ </div>
+ <div class="grid md:grid-cols-3 gap-4" id="ads-list"></div>
+</section>
+
+<section id="tab-schedule" class="tab-content space-y-4 hidden">
+ <div class="card"><h3 class="font-display font-bold text-white mb-3">Programar publicación</h3>
+  <div class="grid md:grid-cols-5 gap-3">
+   <div><span class="lbl">Producto</span><select id="sch-prod" class="inp"></select></div>
+   <div><span class="lbl">Red</span><select id="sch-net" class="inp"><option>Instagram</option><option>Facebook Marketplace</option><option>WhatsApp Estado</option><option>TikTok</option></select></div>
+   <div><span class="lbl">Fecha y hora</span><input id="sch-date" type="datetime-local" class="inp"></div>
+   <div class="md:col-span-2"><span class="lbl">Texto (editable)</span><input id="sch-text" class="inp" placeholder="Puedes traerlo desde Generador Copies"></div>
+  </div><button class="btn mt-3" onclick="addPost()">Agregar al calendario</button></div>
+ <div id="post-list" class="space-y-2"></div>
+</section>
+
+<section id="tab-inbox" class="tab-content space-y-4 hidden">
+ <div class="grid md:grid-cols-2 gap-4">
+  <div class="card space-y-3"><h3 class="font-display font-bold text-white">Mensaje del cliente</h3>
+   <textarea id="in-msg" rows="4" class="inp" placeholder="Pega aquí lo que escribió el cliente (Instagram, WhatsApp, Marketplace)"></textarea>
+   <div class="grid grid-cols-2 gap-3"><div><span class="lbl">Producto</span><select id="in-prod" class="inp"></select></div><div><span class="lbl">Nombre del cliente</span><input id="in-name" class="inp" placeholder="Opcional"></div></div>
+   <button class="btn" onclick="suggestReply()">Generar respuesta</button></div>
+  <div class="card space-y-3"><h3 class="font-display font-bold text-white">Respuesta sugerida (editable)</h3>
+   <div id="in-reply" contenteditable="true" class="text-sm text-slate-100 bg-slate-950 rounded-lg p-3">Aquí aparecerá la respuesta.</div>
+   <div class="flex flex-wrap gap-2"><button class="btn2" onclick="copyEl('in-reply')">Copiar</button><button class="btn2" onclick="openWA()">Abrir en WhatsApp</button><button class="btn" onclick="saleFromInbox()">Concretar venta</button></div></div>
+ </div>
+ <div class="card"><h3 class="font-display font-bold text-white mb-2">Respuestas rápidas</h3><div id="quick" class="grid md:grid-cols-2 gap-2 text-xs text-slate-300"></div></div>
+</section>
+
+<section id="tab-clients" class="tab-content space-y-4 hidden"><div class="card overflow-x-auto"><table class="w-full text-sm text-left"><thead class="text-[11px] text-slate-400"><tr><th class="p-2">Cliente</th><th>Compras</th><th>Total USD</th><th>Última</th><th>Etiqueta</th><th></th></tr></thead><tbody id="clients-body"></tbody></table></div></section>
+
+<section id="tab-finance" class="tab-content space-y-4 hidden">
+ <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="fin-kpis"></div>
+ <div class="grid md:grid-cols-2 gap-4">
+  <div class="card space-y-3"><h3 class="font-display font-bold text-white">Registrar gasto</h3>
+   <input id="ex-name" class="inp" placeholder="Concepto (publicidad, envío, empaques...)"><div class="grid grid-cols-2 gap-3"><input id="ex-amt" type="number" step="0.01" class="inp" placeholder="Monto USD"><select id="ex-cat" class="inp"><option>Publicidad</option><option>Envíos</option><option>Empaque</option><option>Otros</option></select></div>
+   <button class="btn" onclick="addExpense()">Guardar gasto</button><div id="ex-list" class="space-y-1 text-xs text-slate-300"></div></div>
+  <div class="card"><h3 class="font-display font-bold text-white mb-2">Ganancia por producto</h3><div id="fin-prod" class="space-y-1 text-xs text-slate-300"></div></div>
+ </div>
+</section>
+
+<section id="tab-settings" class="tab-content space-y-4 hidden"><div class="card space-y-3 max-w-2xl">
+ <h3 class="font-display font-bold text-white">Footer fijo y tono</h3>
+ <textarea id="cfg-footer" rows="2" class="inp"></textarea>
+ <input id="cfg-wa" class="inp" placeholder="Tu número de WhatsApp con código (ej. 584121234567)">
+ <button class="btn" onclick="saveCfg()">Guardar ajustes</button>
+ <h3 class="font-display font-bold text-white pt-3">Datos de la factura</h3>
+ <p class="text-xs text-slate-400">Aparecen en el ticket que imprimes desde cada venta (junto con tu logo).</p>
+ <input id="cfg-inv-name" class="inp" placeholder="Nombre del negocio (ej. Tienda Nohva)">
+ <input id="cfg-inv-addr" class="inp" placeholder="Ubicación (ej. El Tigre, Anzoátegui)">
+ <input id="cfg-inv-rif" class="inp" placeholder="RIF (opcional)">
+ <input id="cfg-inv-msg" class="inp" placeholder="Mensaje de agradecimiento">
+ <button class="btn" onclick="saveCfg()">Guardar ajustes</button>
+ <h3 class="font-display font-bold text-white pt-3">Respaldo de datos</h3>
+ <p class="text-xs text-slate-400">Tus datos se guardan en este navegador. Descarga un respaldo cada semana.</p>
+ <div class="flex gap-2"><button class="btn2" onclick="exportData()">Descargar respaldo</button><label class="btn2 cursor-pointer">Restaurar<input type="file" accept=".json" class="hidden" onchange="importData(event)"></label></div>
+</div><div class="card space-y-3 max-w-2xl"><h3 class="font-display font-bold text-white">Conexión con la IA</h3>
+ <p class="text-xs" style="color:var(--muted)">La conexión segura con OpenAI y Gemini se administra desde Supabase. Las claves API nunca se guardan en este navegador.</p>
+ <div class="text-xs" style="color:var(--muted)">Proveedores: OpenAI (ChatGPT) y Gemini. Grok y Claude aparecerán como no disponibles hasta completar su integración.</div>
+ <div><span class="lbl">Contactos para reportes (uno por línea: Nombre, correo)</span><textarea id="ai-contacts" rows="3" class="inp" placeholder="Shannon, correo@ejemplo.com"></textarea></div>
+ <label class="flex items-center gap-2 text-xs" style="color:var(--text2)"><input type="checkbox" id="ai-auto">Enviar reportes sin pedirme confirmación</label>
+ <div class="flex flex-wrap items-center gap-2"><button class="btn" onclick="saveAI()">Guardar</button><button class="btn2" onclick="testAI()">Probar conexión</button><span id="ai-status" class="text-xs" style="color:var(--muted)"></span></div></div>
+</section>
+
+
+      </div>
+    </main>
+  </div>
+
+
+  <!-- MODAL NUEVA VENTA (VARIOS PRODUCTOS + SALDO PENDIENTE) -->
+  <div id="modal-new-sale" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-6 space-y-4 shadow-2xl" style="max-height:92vh;overflow-y:auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-display font-bold text-base text-white flex items-center">
+          <i class="fa-solid fa-cart-plus text-indigo-400 mr-2"></i> Registrar Nueva Venta
+        </h3>
+        <button type="button" onclick="closeNewSaleModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <form onsubmit="handleNewSaleSubmit(event)" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Cliente</label>
+            <input type="text" id="sale-client-name" required placeholder="Nombre del cliente" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Canal de Origen</label>
+            <select id="sale-channel" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              <option value="Instagram">Instagram Direct</option>
+              <option value="FB Marketplace">Facebook Marketplace</option>
+              <option value="WhatsApp">WhatsApp Business</option>
+              <option value="TikTok">TikTok Direct</option>
+              <option value="Tienda Directa">Tienda Directa</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-200">Productos del pedido</span>
+            <button type="button" onclick="addSaleLine()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-200 font-medium"><i class="fa-solid fa-plus mr-1"></i>Agregar otro producto</button>
+          </div>
+          <div id="sale-lines" class="space-y-2"></div>
+        </div>
+
+        <div class="rounded-xl p-3 border border-slate-800 bg-slate-950 flex items-center justify-between">
+          <div><p class="text-[11px] text-slate-400">Total del pedido</p><p id="sale-total-usd" class="text-xl font-bold text-white">$0.00</p></div>
+          <p id="sale-total-bs" class="text-sm font-bold text-emerald-400">0.00 Bs</p>
+        </div>
+
+        <div class="space-y-3 border-t border-slate-800 pt-3">
+          <span class="text-xs font-semibold text-slate-200">Pago</span>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Pagó ahora (USD)</label>
+              <input type="number" step="0.01" min="0" id="sale-paid" oninput="salePaidTouched=true;recalcSale()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Método de pago</label>
+              <select id="sale-pay-method" onchange="payExtra('sale','method')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+                <option value="Pago Móvil">Pago Móvil (Bs)</option>
+            <option value="Divisas $">Efectivo Divisas ($ USD)</option>
+            <option value="USDT">USDT Binance Pay</option>
+            <option value="Zinli/Zelle">Zinli / Zelle</option>
+            <option value="Efectivo Bs">Efectivo Bolívares (Bs)</option>
+              </select>
+            </div>
+          </div>
+          <div id="sale-pay-extra" class="space-y-3">
+            <div id="sale-bs-box" class="grid grid-cols-2 gap-3 hidden">
+              <div>
+                <label class="block text-xs text-slate-300 mb-1">Tasa del día (Bs por USD)</label>
+                <input type="number" step="0.0001" min="0" id="sale-rate" oninput="payExtra('sale','rate')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-300 mb-1">Monto recibido en Bs</label>
+                <input type="number" step="0.01" min="0" id="sale-bs" oninput="payExtra('sale','bs')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              </div>
+              <p id="sale-bs-hint" class="col-span-2 text-[11px] text-slate-400"></p>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Referencia <span class="text-slate-500">(opcional)</span></label>
+              <input type="text" id="sale-ref" maxlength="40" placeholder="Ej: 0123456789 (pago móvil, Zelle, Binance…)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="salePaidAll()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-200">Pagó todo</button>
+            <button type="button" onclick="salePaidNone()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-200">No ha pagado nada</button>
+            <span id="sale-balance-line" class="text-xs font-semibold"></span>
+          </div>
+          <div id="sale-due-box" class="space-y-2">
+          <label class="block text-xs text-slate-300">¿Cuándo pagará el resto?</label>
+          <div class="grid grid-cols-2 gap-3 items-center">
+            <select id="sale-due-choice" onchange="dueChanged('sale')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              <option value="q1">En 1 quincena (15 días)</option>
+              <option value="q2">En 2 quincenas (30 días)</option>
+              <option value="eom">A fin de mes</option>
+              <option value="custom">Otra fecha…</option>
+            </select>
+            <div><input type="date" id="sale-due-date" oninput="dueChanged('sale')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white hidden"><p id="sale-due-show" class="text-xs text-slate-400"></p></div>
+          </div>
+        </div>
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2 border-t border-slate-800">
+          <button type="button" onclick="closeNewSaleModal()" class="px-4 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 font-medium">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-xs text-white font-bold shadow-lg shadow-indigo-600/30">Guardar Venta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ABONO A SALDO PENDIENTE -->
+  <div id="modal-pay" class="fixed inset-0 z-50 bg-slate-950/80 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-4 shadow-2xl" style="max-height:92vh;overflow-y:auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-display font-bold text-base text-white"><i class="fa-solid fa-hand-holding-dollar text-indigo-400 mr-2"></i>Registrar abono</h3>
+        <button type="button" onclick="closePay()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="submitPay(event)" class="space-y-3">
+        <p id="pay-info" class="text-xs text-slate-300 leading-relaxed"></p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Monto del abono (USD)</label>
+            <input type="number" step="0.01" min="0.01" id="pay-amt" oninput="payChanged()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Método</label>
+            <select id="pay-method" onchange="payExtra('pay','method')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              <option value="Pago Móvil">Pago Móvil (Bs)</option>
+            <option value="Divisas $">Efectivo Divisas ($ USD)</option>
+            <option value="USDT">USDT Binance Pay</option>
+            <option value="Zinli/Zelle">Zinli / Zelle</option>
+            <option value="Efectivo Bs">Efectivo Bolívares (Bs)</option>
+            </select>
+          </div>
+        </div>
+        <div id="pay-pay-extra" class="space-y-3">
+            <div id="pay-bs-box" class="grid grid-cols-2 gap-3 hidden">
+              <div>
+                <label class="block text-xs text-slate-300 mb-1">Tasa del día (Bs por USD)</label>
+                <input type="number" step="0.0001" min="0" id="pay-rate" oninput="payExtra('pay','rate')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              </div>
+              <div>
+                <label class="block text-xs text-slate-300 mb-1">Monto recibido en Bs</label>
+                <input type="number" step="0.01" min="0" id="pay-bs" oninput="payExtra('pay','bs')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              </div>
+              <p id="pay-bs-hint" class="col-span-2 text-[11px] text-slate-400"></p>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Referencia <span class="text-slate-500">(opcional)</span></label>
+              <input type="text" id="pay-ref" maxlength="40" placeholder="Ej: 0123456789 (pago móvil, Zelle, Binance…)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+            </div>
+          </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="payAll()" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-200">Pagar saldo completo</button>
+          <span id="pay-rest" class="text-xs font-semibold"></span>
+        </div>
+        <div id="pay-due-box" class="space-y-2">
+          <label class="block text-xs text-slate-300">¿Cuándo pagará el resto?</label>
+          <div class="grid grid-cols-2 gap-3 items-center">
+            <select id="pay-due-choice" onchange="dueChanged('pay')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+              <option value="q1">En 1 quincena (15 días)</option>
+              <option value="q2">En 2 quincenas (30 días)</option>
+              <option value="eom">A fin de mes</option>
+              <option value="custom">Otra fecha…</option>
+            </select>
+            <div><input type="date" id="pay-due-date" oninput="dueChanged('pay')" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white hidden"><p id="pay-due-show" class="text-xs text-slate-400"></p></div>
+          </div>
+        </div>
+        <div class="pt-2 flex justify-end space-x-2 border-t border-slate-800">
+          <button type="button" onclick="closePay()" class="px-4 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 font-medium">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-xs text-white font-bold">Guardar abono</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL HISTORIAL DE PAGOS DE UNA VENTA -->
+  <div id="modal-hist" class="fixed inset-0 z-50 bg-slate-950/80 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl p-6 space-y-4 shadow-2xl" style="max-height:92vh;overflow-y:auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-display font-bold text-base text-white"><i class="fa-solid fa-clock-rotate-left text-indigo-400 mr-2"></i>Historial de pagos</h3>
+        <button type="button" onclick="closeHist()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="hist-body" class="space-y-4"></div>
+    </div>
+  </div>
+
+
+  <!-- MODAL EDITAR VENTA -->
+  <div id="modal-edit-sale" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-6 space-y-4 shadow-2xl" style="max-height:92vh;overflow-y:auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="font-display font-bold text-base text-white"><i class="fa-solid fa-pen text-indigo-400 mr-2"></i>Editar venta</h3>
+        <button type="button" onclick="closeEditSale()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="submitEditSale(event)" class="space-y-4">
+        <p id="edit-info" class="text-xs text-slate-300"></p>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs text-slate-300 mb-1">Cliente</label><input type="text" id="edit-client" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white"></div>
+          <div><label class="block text-xs text-slate-300 mb-1">Canal de origen</label><select id="edit-channel" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white"></select></div>
+          <div class="col-span-2"><label class="block text-xs text-slate-300 mb-1">Método de pago principal</label><select id="edit-method" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white"></select></div>
+        </div>
+        <div class="space-y-2">
+          <span class="text-xs font-semibold text-slate-200">Productos</span>
+          <div id="edit-lines" class="space-y-2"></div>
+          <p class="text-[10px] text-slate-500">Si cambias la cantidad, el stock del inventario se ajusta solo. Para cambiar de producto, borra la venta y regístrala de nuevo.</p>
+        </div>
+        <div class="rounded-xl p-3 border border-slate-800 bg-slate-950 flex items-center justify-between">
+          <div><p class="text-[11px] text-slate-400">Total de la venta</p><p id="edit-total" class="text-xl font-bold text-white">$0.00</p></div>
+          <p id="edit-bal" class="text-xs font-semibold text-right"></p>
+        </div>
+        <div id="edit-due-box" class="hidden">
+          <label class="block text-xs text-slate-300 mb-1">Fecha límite para pagar el saldo</label>
+          <input type="date" id="edit-due" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+        </div>
+        <div class="pt-2 flex justify-end space-x-2 border-t border-slate-800">
+          <button type="button" onclick="closeEditSale()" class="px-4 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 font-medium">Cancelar</button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-xs text-white font-bold shadow-lg shadow-indigo-600/30">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- MODAL ADD PRODUCT -->
+  <div id="modal-prod" class="fixed inset-0 z-50 bg-slate-950/80 hidden items-center justify-center p-4">
+ <form onsubmit="saveProd(event)" class="card w-full max-w-lg space-y-4" style="max-height:92vh;overflow-y:auto">
+  <div class="flex items-center justify-between"><h3 id="pf-title" class="font-display font-bold text-white text-lg"></h3><button type="button" class="btn2" onclick="closeProd()">Cerrar</button></div>
+  <div class="flex gap-3 items-center"><img id="pf-img" class="w-24 h-24 rounded-xl object-cover" style="background:var(--surface2)" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'"><div class="space-y-2 flex-1"><label class="btn2 inline-block cursor-pointer">Subir foto<input type="file" accept="image/*" class="hidden" onchange="pfFile(event)"></label><input id="pf-url" class="inp" placeholder="o pega el enlace de una imagen" oninput="pfUrl()"></div></div>
+  <div class="grid grid-cols-2 gap-3">
+   <div><span class="lbl">ID</span><input id="pf-id" class="inp" required></div>
+   <div><span class="lbl">Categoría</span><input id="pf-cat" list="pf-cats" class="inp" required><datalist id="pf-cats"></datalist></div>
+   <div class="col-span-2"><span class="lbl">Nombre del producto</span><input id="pf-name" class="inp" required></div>
+   <div><span class="lbl">Costo real (USD)</span><input id="pf-cost" type="number" step="0.01" min="0" class="inp" required oninput="pfPrev()"></div>
+   <div><span class="lbl">Precio de venta (USD)</span><input id="pf-price" type="number" step="0.01" min="0" class="inp" required oninput="pfPrev()"></div>
+   <div><span class="lbl">Unidades en stock</span><input id="pf-stock" type="number" step="1" min="0" class="inp" required></div>
+   <div><span class="lbl">Fecha de ingreso</span><input id="pf-date" type="date" class="inp" required></div>
+  </div>
+  <p id="pf-calc" class="text-xs"></p>
+  <div class="flex justify-between gap-2"><button type="button" id="pf-del" class="btn2" style="color:var(--bad)" onclick="delProd()">Eliminar</button><div class="flex gap-2"><button type="button" class="btn2" onclick="closeProd()">Cancelar</button><button class="btn">Guardar</button></div></div>
+ </form></div>
+
+
+
+  <!-- LOGIC SCRIPT -->
+  <!-- Lógica de la plataforma (el orden importa: datos primero, app al final) -->
+  <script src="js/datos.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/ventas.js"></script>
+  <script src="js/factura.js"></script>
+  <script src="js/inventario.js"></script>
+  <script src="js/finanzas.js"></script>
+  <script src="js/marketing.js"></script>
+  <script src="js/diseno.js"></script>
+  <script src="js/ia.js"></script>
+  <script src="js/app.js"></script>
+
+
 </body>
 </html>
