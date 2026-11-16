@@ -38,7 +38,7 @@
       try {
         await nohvaSignIn(document.getElementById('email').value.trim(), document.getElementById('password').value);
         const access = await nohvaRequireSession();
-        if (access) window.location.replace('./');
+        if (access) window.location.replace('./v12/index.html');
       } catch (error) {
         errorBox.textContent = 'No se pudo iniciar sesión. Verifica tu usuario y contraseña o consulta con un propietario.';
         errorBox.classList.remove('hidden');
@@ -46,8 +46,16 @@
         button.disabled = false; button.textContent = 'Ingresar';
       }
     });
+    // Avoid redirecting unauthenticated visitors away from this nested login URL.
     (async () => {
-      try { const access = await nohvaRequireSession(); if (access) window.location.replace('./'); } catch (_) {}
+      try {
+        const { data: { session }, error } = await nohvaSupabase.auth.getSession();
+        if (error) throw error;
+        if (session) {
+          const access = await nohvaRequireSession();
+          if (access) window.location.replace('./v12/index.html');
+        }
+      } catch (_) {}
     })();
   </script>
 </body>
