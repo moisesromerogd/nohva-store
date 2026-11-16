@@ -89,59 +89,77 @@ async function callGemini(system: string, messages: any[]) {
   const key = Deno.env.get("GEMINI_API_KEY");
   if (!key) throw new Error("Gemini todavía no está configurado en Supabase.");
 
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
-  const maxAttempts = 4;
-  let lastError = "Gemini no pudo completar la solicitud.";
+  const models = [
+    { name: "gemini-3.8-flash", attempts: 2 },
+    { name: "gemini-3.5-flash-lite", attempts: 2 },
+  ];
+  let lastError = "Gemini no pudo completar la solicitud."; 
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: system || "Eres el asistente de Nohva Store." }] },
-          contents: toGeminiContents(messages),
-          generationConfig: { temperature: 0.7 },
-        }),
-      });
-    } catch (error) {
-      lastError = error instanceof Error ? error.message : "Error de conexión con Gemini.";
-      if (attempt === maxAttempts) break;
-      const delay = Math.min(1000 * (2 ** (attempt - 1)), 8000) + Math.floor(Math.random() * 500);
+  for (let modelIndex = 0; modelIndex < models.length; modelIndex++) {
+    const model = models[modelIndex];
+    for (let attempt = 1; attempt <= model.attempts; attempt++) {
+      let response: Response;
+      try {
+        response = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/" + model.name + ":generateContent",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: system || "Eres el asistente de Nohva Store." }] },
+              contents: toGeminiContents(messages),
+              generationConfig: { temperature: 0.7 },
+            }),
+          },
+        );
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : "Error de conexión con Gemini."; 
+        if (attempt < model.attempts) {
+          const delay = 1000 * (2 ** (attempt - 1)) + Math.floor(Math.random() * 500);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        if (modelIndex === 0) break;
+        throw new Error("No se pudo conectar con Gemini ni con el modelo alternativo: " + lastError);
+      }
+
+      const raw = await response.text();
+      let data: any = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { data = {}; }
+
+      if (response.ok) {
+        const text = (data?.candidates?.[0]?.content?.parts || [])
+          .filter((p: any) => typeof p.text === "string")
+          .map((p: any) => p.text)
+          .join("\n");
+        if (!text) throw new Error("Gemini respondió, pero no devolvió texto. Intenta con otra instrucción.");
+        return { content: [{ type: "text", text }], stop_reason: "end_turn", provider: "gemini", model: model.name };
+      }
+
+      lastError = data?.error?.message || ("Gemini respondió con estado " + response.status + ".");
+      const transient = response.status === 408 || response.status === 429 || response.status >= 500;
+      // Only a 503 capacity outage triggers a different model.
+      // Authentication, billing, permission and malformed-request errors are never masked.
+      if (response.status === 503 && modelIndex === 0 && attempt === model.attempts) break;
+      if (!transient || attempt === model.attempts) {
+        if (response.status === 503 && modelIndex === 1) {
+          throw new Error("Gemini principal y modelo alternativo están temporalmente saturados. Intenta de nuevo en unos minutos.");
+        }
+        if (response.status === 429) {
+          throw new Error("Gemini alcanzó un límite de uso (429). Revisa los límites y la facturación de tu proyecto de Google AI Studio.");
+        }
+        throw new Error(lastError);
+      }
+
+      const retryAfter = Number(response.headers.get("Retry-After"));
+      const delay = Number.isFinite(retryAfter) && retryAfter > 0
+        ? Math.min(retryAfter * 1000, 15000)
+        : 1000 * (2 ** (attempt - 1)) + Math.floor(Math.random() * 500);
       await new Promise((resolve) => setTimeout(resolve, delay));
-      continue;
     }
-
-    const raw = await response.text();
-    let data: any = {};
-    try { data = raw ? JSON.parse(raw) : {}; } catch { data = {}; }
-
-    if (response.ok) {
-      const text = (data?.candidates?.[0]?.content?.parts || [])
-        .filter((p: any) => typeof p.text === "string")
-        .map((p: any) => p.text)
-        .join("\n");
-      if (!text) throw new Error("Gemini respondió, pero no devolvió texto. Intenta con otra instrucción.");
-      return { content: [{ type: "text", text }], stop_reason: "end_turn", provider: "gemini" };
-    }
-
-    lastError = data?.error?.message || `Gemini respondió con estado ${response.status}.`;
-    const retryable = response.status === 408 || response.status === 429 || response.status >= 500;
-    if (!retryable || attempt === maxAttempts) {
-      throw new Error(retryable
-        ? `Gemini sigue temporalmente saturado después de ${maxAttempts} intentos. Intenta de nuevo en unos minutos.`
-        : lastError);
-    }
-
-    const retryAfter = Number(response.headers.get("Retry-After"));
-    const delay = Number.isFinite(retryAfter) && retryAfter > 0
-      ? Math.min(retryAfter * 1000, 15000)
-      : Math.min(1000 * (2 ** (attempt - 1)), 8000) + Math.floor(Math.random() * 500);
-    await new Promise((resolve) => setTimeout(resolve, delay));
   }
 
-  throw new Error(`No se pudo conectar con Gemini: ${lastError}`);
+  throw new Error("Gemini no pudo responder: " + lastError);
 }
 
 Deno.serve(async (req) => {
