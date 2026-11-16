@@ -47,7 +47,17 @@ function nohvaIsOwner() {
   return !!nohvaProfile && nohvaProfile.role === 'owner';
 }
 
-async function nohvaSignIn(email, password) {
+function nohvaResolveLoginIdentifier(identifier) {
+  const value = String(identifier || '').trim().toLowerCase();
+  const ownerAliases = {
+    moises: 'moises@nohvastore.com',
+    shannon: 'shannon@nohvastore.com'
+  };
+  return ownerAliases[value] || value;
+}
+
+async function nohvaSignIn(identifier, password) {
+  const email = nohvaResolveLoginIdentifier(identifier);
   const { data, error } = await nohvaSupabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
   return data;
@@ -68,6 +78,7 @@ function nohvaGuardOwnerElements() {
 window.nohvaSupabase = nohvaSupabase;
 window.nohvaRequireSession = nohvaRequireSession;
 window.nohvaSignIn = nohvaSignIn;
+window.nohvaResolveLoginIdentifier = nohvaResolveLoginIdentifier;
 window.nohvaSignOut = nohvaSignOut;
 window.nohvaIsOwner = nohvaIsOwner;
 window.nohvaGuardOwnerElements = nohvaGuardOwnerElements;
