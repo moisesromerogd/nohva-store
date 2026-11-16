@@ -17,7 +17,8 @@
   }
 
   function requireSession() {
-    if (!window.nohvaSession || !window.nohvaProfile || !window.nohvaProfile.active) {
+    const profile = window.nohvaGetProfile && window.nohvaGetProfile();
+    if (!profile || !profile.active) {
       throw new Error('Tu sesión no está autorizada. Inicia sesión nuevamente.');
     }
   }
