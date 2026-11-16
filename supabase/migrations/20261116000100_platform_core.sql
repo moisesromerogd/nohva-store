@@ -1,6 +1,7 @@
 -- Nohva Platform: additive core schema (review before applying)
 -- This migration intentionally does NOT alter the existing catalog tables or policies.
--- Apply only after confirming the Auth users and testing against a staging project.
+-- Additive migration. Existing catalog tables and policies are intentionally untouched.
+-- Existing Auth users are bootstrapped below; only the two confirmed business accounts become owners.
 
 create table if not exists public.platform_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -55,6 +56,28 @@ drop trigger if exists platform_profile_after_signup on auth.users;
 create trigger platform_profile_after_signup
 after insert on auth.users
 for each row execute procedure public.platform_profile_bootstrap();
+
+-- Bootstrap profiles for Auth users that existed before this migration.
+-- Existing accounts start as employees unless explicitly promoted below.
+insert into public.platform_profiles (user_id, display_name, role)
+select
+  u.id,
+  coalesce(
+    nullif(u.raw_user_meta_data->>'display_name',''),
+    split_part(coalesce(u.email,''),'@',1),
+    'Usuario'
+  ),
+  'employee'
+from auth.users u
+on conflict (user_id) do nothing;
+
+-- Promote only the two owner accounts explicitly confirmed by the business owner.
+update public.platform_profiles
+set role = 'owner', active = true
+where user_id in (
+  '1bacb0d6-a932-4e43-8989-6ce491a50173'::uuid, -- moises@nohvastore.com
+  '877b1632-45c9-4035-85f7-f59e952ea78e'::uuid  -- shannon@nohvastore.com
+);
 
 create table if not exists public.platform_sales (
   id uuid primary key default gen_random_uuid(),
