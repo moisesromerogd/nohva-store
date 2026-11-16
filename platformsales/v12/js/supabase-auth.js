@@ -21,8 +21,9 @@ let nohvaProfile = null;
 async function nohvaRequireSession() {
   const { data: { session }, error } = await nohvaSupabase.auth.getSession();
   if (error) throw error;
+  const onLoginPage = /\\/login\\.html$/.test(window.location.pathname);
   if (!session) {
-    window.location.replace('./login.html');
+    if (!onLoginPage) window.location.replace('./login.html');
     return null;
   }
   const { data: profile, error: profileError } = await nohvaSupabase
@@ -32,7 +33,7 @@ async function nohvaRequireSession() {
     .single();
   if (profileError || !profile || !profile.active) {
     await nohvaSupabase.auth.signOut();
-    window.location.replace('./login.html?reason=unauthorized');
+    if (!onLoginPage) window.location.replace('./login.html?reason=unauthorized');
     return null;
   }
   nohvaSession = session;
