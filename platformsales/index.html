@@ -74,10 +74,12 @@
 <script>
 (async function () {
   const $ = id => document.getElementById(id);
+  let currentUserId = null;
   try {
     const access = await nohvaRequireSession();
     if (!access) return;
     const { profile } = access;
+    currentUserId = access.session.user.id;
     $('user-name').textContent = profile.display_name || access.session.user.email;
     $('user-role').textContent = profile.role === 'owner' ? 'Propietario · Acceso completo' : 'Empleado · Acceso operativo';
     nohvaGuardOwnerElements();
@@ -95,7 +97,7 @@
       const paid = (sale.platform_payments || []).reduce((sum, p) => sum + Number(p.amount_usd || 0), 0);
       const products = (sale.platform_sale_items || []).map(i => i.product_name + ' × ' + i.quantity).join(', ');
       const date = new Date(sale.sale_date).toLocaleDateString('es-VE');
-      return '<tr><td class="py-3 pr-3 text-slate-400">' + date + '</td><td class="py-3 pr-3">' + escapeHtml(sale.client_name || 'Sin nombre') + '</td><td class="py-3 pr-3 text-slate-300">' + escapeHtml(products) + '</td><td class="py-3 pr-3">$' + Number(sale.total_usd).toFixed(2) + '</td><td class="py-3 pr-3 text-emerald-400">$' + paid.toFixed(2) + '</td><td class="py-3 pr-3 text-amber-300">$' + Math.max(0, Number(sale.total_usd) - paid).toFixed(2) + '</td><td class="py-3 pr-3 text-xs text-slate-400">' + escapeHtml(sale.seller_id === access.session.user.id ? 'Tú' : 'Otro vendedor') + '</td></tr>';
+      return '<tr><td class="py-3 pr-3 text-slate-400">' + date + '</td><td class="py-3 pr-3">' + escapeHtml(sale.client_name || 'Sin nombre') + '</td><td class="py-3 pr-3 text-slate-300">' + escapeHtml(products) + '</td><td class="py-3 pr-3">$' + Number(sale.total_usd).toFixed(2) + '</td><td class="py-3 pr-3 text-emerald-400">$' + paid.toFixed(2) + '</td><td class="py-3 pr-3 text-amber-300">$' + Math.max(0, Number(sale.total_usd) - paid).toFixed(2) + '</td><td class="py-3 pr-3 text-xs text-slate-400">' + escapeHtml(sale.seller_id === currentUserId ? 'Tú' : 'Otro vendedor') + '</td></tr>';
     }).join('');
   }
 
