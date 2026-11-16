@@ -40,7 +40,9 @@
         const access = await nohvaRequireSession();
         if (access) window.location.replace('./v12/index.html');
       } catch (error) {
-        errorBox.textContent = 'No se pudo iniciar sesión. Verifica tu usuario y contraseña o consulta con un propietario.';
+        console.error('Error de acceso Nohva:', error);
+        const detail = error && error.message ? String(error.message) : 'Error desconocido';
+        errorBox.textContent = 'No se pudo completar el acceso: ' + detail;
         errorBox.classList.remove('hidden');
       } finally {
         button.disabled = false; button.textContent = 'Ingresar';
