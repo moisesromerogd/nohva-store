@@ -70,3 +70,6 @@ window.nohvaSignIn = nohvaSignIn;
 window.nohvaSignOut = nohvaSignOut;
 window.nohvaIsOwner = nohvaIsOwner;
 window.nohvaGuardOwnerElements = nohvaGuardOwnerElements;
+
+window.nohvaGetProfile = () => nohvaProfile;
+window.nohvaGetSession = () => nohvaSession;
