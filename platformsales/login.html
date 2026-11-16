@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Nohva Platform · Acceso</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./v12/js/supabase-auth.js"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+  <main class="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+    <div class="mb-6 text-center">
+      <div class="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-indigo-600 text-xl font-black">N</div>
+      <h1 class="text-xl font-bold">Nohva Platform</h1>
+      <p class="mt-1 text-sm text-slate-400">Acceso privado para el equipo</p>
+    </div>
+    <form id="login-form" class="space-y-4">
+      <label class="block text-sm">Correo electrónico
+        <input id="email" type="email" autocomplete="username" required class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 outline-none focus:border-indigo-500">
+      </label>
+      <label class="block text-sm">Contraseña
+        <input id="password" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 outline-none focus:border-indigo-500">
+      </label>
+      <p id="error" role="alert" class="hidden rounded-lg bg-rose-950/60 p-3 text-sm text-rose-300"></p>
+      <button id="submit" class="w-full rounded-xl bg-indigo-600 py-3 font-semibold hover:bg-indigo-500">Ingresar</button>
+    </form>
+    <p class="mt-5 text-center text-xs text-slate-500">Las cuentas son creadas por los propietarios. No hay registro público.</p>
+  </main>
+  <script>
+    const form = document.getElementById('login-form');
+    const errorBox = document.getElementById('error');
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = document.getElementById('submit');
+      button.disabled = true; button.textContent = 'Verificando…';
+      errorBox.classList.add('hidden');
+      try {
+        await nohvaSignIn(document.getElementById('email').value.trim(), document.getElementById('password').value);
+        const access = await nohvaRequireSession();
+        if (access) window.location.replace('./');
+      } catch (error) {
+        errorBox.textContent = 'No se pudo iniciar sesión. Verifica tus credenciales o consulta con un propietario.';
+        errorBox.classList.remove('hidden');
+      } finally {
+        button.disabled = false; button.textContent = 'Ingresar';
+      }
+    });
+    (async () => {
+      try { const access = await nohvaRequireSession(); if (access) window.location.replace('./'); } catch (_) {}
+    })();
+  </script>
+</body>
+</html>
